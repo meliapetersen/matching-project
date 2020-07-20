@@ -1,0 +1,133 @@
+---
+title: "matching code"
+author: "Melia Petersen"
+date: "7/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# load package 
+library( MatchIt )
+library(here)
+```
+
+```{r}
+here()
+```
+
+```{r}
+#load data 
+data <- read.csv(here("data/2019_NMTC_Data.csv"))
+
+#need to figure out data 
+```
+
+```{r}
+#MatchIt code 
+
+m1 = matchit(df$school ~ df$income + df$occ_score + df$y_educ, method = "nearest", data = df)
+
+
+#code interpretation from notes
+matchit(program(y/n/) ~ ses + race + age(?), method = "nearest", data = data) 
+
+```
+
+```{r}
+summary(m1)
+```
+
+Merge code 
+
+Data 
+```{r}
+
+d1 <- readRDS(here ( "data/data-rodeo/LTDB-2000.rds" ))
+d2 <- readRDS(here ( "data/data-rodeo/LTDB-2010.rds" ))
+md <- readRDS(here ( "data/data-rodeo/LTDB-META-DATA.rds" ))
+
+d1 <- select( d1, - year )
+d2 <- select( d2, - year )
+
+d <- merge( d1, d2, by="tractid" )
+d <- merge( d, md, by="tractid" )
+
+```
+
+```{r}
+URL1 <- "https://raw.githubusercontent.com/DS4PS/cpp-528-spr-2020/master/labs/data/raw/NMTC/nmtc-sheet-01.csv"
+nmtc <- read.csv( URL1, stringsAsFactors=F )
+head( nmtc ) 
+```
+
+```{r}
+# remove anything not a number from the string
+d$id2 <- gsub( "[^0-9]", "", d$tractid )
+head( d$id2 )
+```
+
+
+```{r}
+# fix IDs so they are match
+d$id2 <- as.numeric( d$id2 )
+```
+
+NMTC:
+
+```{r}
+# need to convert from currency to numeric
+# current format: 
+# head( nmtc$QLICI.Amount )
+# [1] "$300,000.00 "   "$1,008,750.00 " "$977,000.00 "
+
+# remove dollar sign and commas
+nmtc$amount <- gsub( "[,$]", "", nmtc$QLICI.Amount )
+
+# head(  nmtc$amount  )
+# "300000.00 "  "1008750.00 " "977000.00 "
+
+# convert characters to numeric 
+nmtc$amount <- as.numeric( nmtc$amount ) %>% round(0)
+
+# head(  nmtc$amount  )
+# [1]  300000 1008750  977000
+
+nmtc.dollars <- 
+  nmtc %>% 
+  filter( Origination.Year >= 2000 & Origination.Year <= 2010 ) %>%
+  group_by( X2010.Census.Tract ) %>% 
+  summarize( num.nmtc=n(), nmtc.total = sum( amount, na.rm=T ) )
+
+head( nmtc.dollars )
+```
+
+```{r}
+d <- merge( d, nmtc.dollars, by.x="id2", by.y="X2010.Census.Tract", all.x=T )
+d <- merge( d, lihtc.dollars, by.x="id2", by.y="fips2010", all.x=T )
+
+# recode tracts that had no grants from NA to 0
+
+d$num.nmtc[ is.na(d$num.nmtc) ] <- 0
+d$nmtc.total[ is.na(d$nmtc.total) ] <- 0
+
+d$num.lihtc[ is.na(d$num.lihtc) ] <- 0 
+d$lihtc.total[ is.na(d$lihtc.total) ] <- 0
+```
+
+
+Remove Rural Districts 
+
+```{r}
+table( d$urban )
+```
+
+```{r}
+d <- filter( d, urban == "urban" )
+```
+
+
+
