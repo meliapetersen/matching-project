@@ -73,19 +73,45 @@ d <- filter( d, urban == "urban" )
 ```
 
 ```{r}
-#create data frame for matching 
+head(d)
+```
 
+
+```{r}
+# create data frame for matching 
+
+# create variables
+
+# cbsa
+tractid <- d$tractid
+
+# demographics
+white <- d$pnhwht12
+income <- d$hinc12
+age <- d$p60up12
+
+# program participation
+
+treatment <- d$nmtc.total
+
+df <- data.frame(tractid, white, income, age, treatment)
+
+head(df)
 
 ```
+
+
 
 ```{r}
 #MatchIt code 
 
-m1 = matchit(df$school ~ df$income + df$occ_score + df$y_educ, method = "nearest", data = d)
+# m1 = matchit(df$school ~ df$income + df$occ_score + df$y_educ, method = "nearest", data = d)
+
+m1 = matchit(df$treatment ~ df$income + df$white + df$age, method = "nearest", data = d)
 
 
-#code interpretation from notes
-matchit(program(y/n/) ~ ses + race + age(?), method = "nearest", data = data) 
+## code interpretation from notes
+# matchit(program(y/n/) ~ ses + race + age(?), method = "nearest", data = data) 
 
 ```
 
