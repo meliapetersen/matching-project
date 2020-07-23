@@ -74,25 +74,37 @@ d$nmtc.total[ is.na(d$nmtc.total) ] <- 0
 
 #remove rural districts 
 d <- filter( d, urban == "urban" )
+
+
+```
+
+```{r}
+head (d)
 ```
 
 ### Create data frame for matching
 
 ```{r}
-# match on race as treatment (majority vs minority communities) 
+# create treatment variable
+treatment <- ifelse(d$nmtc.total>0, 1, 0)
+
+```
+
+
+```{r}
+# match nmtc as treatment (census tracts that recieved nmtc funding vs those that didn't)
 # and seek balance on other SES characteristics 
 
 df <- 
   d %>% 
-  select( globg00, rent00, hinc00, pnhwht12, pnhblk12, phisp12, 
+  select( cbsa, treatment, rent00, hinc00, pnhwht12, pnhblk12, phisp12, 
               ppov12, punemp12,
               hinc12, hincb12, hincw12, 
               phs12, pcol12,
               pown12, mhmval12 ) %>% 
-  filter( globg00 %in% c( "White Black","White","Minority" ) ) %>% 
-  mutate( white = as.numeric( globg00 == "White" ), 
-            minority = as.numeric( globg00 == "Minority" ), 
-            diverse = as.numeric( globg00 != "White" ) )
+ filter( treatment %in% c( 1,0 ) ) %>% 
+ mutate( Treated = as.numeric( treatment == 1 ), 
+           Control =  as.numeric( treatment == 0 ))
 
 # drop rows with missing values
 
@@ -104,38 +116,12 @@ nrow( df2 )
 # "treated" group is white
 # comparison set is minority communities 
 
-table( df2$globg00 )
+head( df2)
+
 ```
 
 
 ### matchit function 
-
-
-Default is nearest neighbor method. As we can see here it does not work very well. 
-
-```{r}
-m1 <- matchit( white ~ hinc12 + phs12 + mhmval12, method = "nearest", discard="none", data = df2 )
-
-summary( m1 )
-# poor balance
-
-
-
-m2 <- matchit( white ~ hinc12 + phs12 + mhmval12, method = "nearest", discard="both", reestimate=TRUE, data = df2 )
-
-summary( m2 )
-# poor balance
-
-
-
-
-m2.2 <- matchit( white ~ hinc12 + phs12 + mhmval12, method = "nearest", 
-               discard="both", reestimate=TRUE, caliper=.25, data = df2 )
-
-summary( m2.2 )
-# improvement but stil not great
-```
-
 
 ### Genetic Search Method
 
@@ -156,19 +142,23 @@ results
 # exact result in the future
 set.seed( seed=1234 )
 
-df3 <- sample_n( df2, 1000 )
-table( df3$globg00 )
+# create sample set for top NMTC 
+
+df3 <- df2  %>%  filter(cbsa == c(35380, 20260, 31100, 16980, 33340 ))
+                 
+                 
+table( df3$treatment )
 
 
-m3 <- matchit( white ~ hinc12 + phs12 + mhmval12, 
+m3 <- matchit( mhmval12 ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
                replace=TRUE, data = df3 ) 
 
-m4 <- matchit( white ~ hinc12 + phs12 + mhmval12, 
+m4 <- matchit( mhmval12 ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
-               replace=FALSE, caliper=.25, data = df3 ) 
+               replace=TRUE, caliper=.25, data = df3 ) 
 
-m5 <- matchit( white ~ hinc12 + phs12 + mhmval12, 
+m5 <- matchit( mhmval12 ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
                replace=FALSE, caliper=.25, data = df3 ) 
 
