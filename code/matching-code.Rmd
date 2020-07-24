@@ -150,15 +150,15 @@ df3 <- df2  %>%  filter(cbsa %in%  c(35380, 20260, 31100, 16980, 33340 ))
 table( df3$treatment )
 
 
-m3 <- matchit( mhmval12 ~ hinc12 + pcol12 + pnhwht12, 
+m3 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
                replace=TRUE, data = df3 ) 
 
-m4 <- matchit( mhmval12 ~ hinc12 + pcol12 + pnhwht12, 
+m4 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
                replace=TRUE, caliper=.25, data = df3 ) 
 
-m5 <- matchit( mhmval12 ~ hinc12 + pcol12 + pnhwht12, 
+m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
                replace=FALSE, caliper=.25, data = df3 ) 
 
