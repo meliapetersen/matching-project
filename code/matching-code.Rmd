@@ -142,9 +142,9 @@ results
 # exact result in the future
 set.seed( seed=1234 )
 
-# create sample set for top NMTC 
+# create sample set for cities with high NMTC funding: New Orleans, Saint Louis, Los Angeles, Chicago, Milwaukee
 
-df3 <- df2  %>%  filter(cbsa == c(35380, 20260, 31100, 16980, 33340 ))
+df3 <- df2  %>%  filter(cbsa %in%  c(35380, 20260, 31100, 16980, 33340 ))
                  
                  
 table( df3$treatment )
