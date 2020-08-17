@@ -150,14 +150,17 @@ results
 set.seed( seed=1234 )
 
 # create sample set for cities with high NMTC funding: New Orleans
-df3 <- df2  %>%  filter(cbsa %in% c(35380, 20260))
-           
+df3 <- df2  %>%  filter(cbsa %in% 35380)
+
+row.names(df3) <- df3$id2    
+df3 <- na.omit( df3 )
+
 # df3$cbsa.f <- factor(df3$cbsa)      
                  
 table( df3$treatment )
 
 
-m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12 + cbsa, 
+m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
                replace=FALSE, caliper=.25, data = df3 ) 
 
@@ -181,7 +184,26 @@ Constructing the balanced sample:
 matches <- data.frame( treatment.group.id=row.names( m5$match.matrix), 
                        control.group.id=m5$match.matrix )
 
-head( matches, 34 )
+these.na <- is.na(matches$control.group.id)
+
+id.all.treated <- matches$treatment.group.id 
+id.treated.matched <- matches$treatment.group.id[!these.na]
+id.treated.unmatched <- matches$treatment.group.id[these.na]
+id.control.matched <- na.omit(matches$control.group.id)
+id.control.unmatched <- df3$id2 [ !(df3$id2 %in% id.all.treated | df3$id2 %in% id.control.matched)]
+
+
+matches <- na.omit(matches)
+
+sum(is.na(matches$control.group.id))
+
+head( matches, 61 )
+
+```
+
+```{r}
+print(matches$treatment.group.id)
+print(matches$control.group.id)
 ```
 
 
@@ -234,21 +256,21 @@ plot( no )
 ### Create Treatment and Control vectors
 
 ```{r}
-Control <- matches$control.group.id
-Treatment <- matches$treatment.group.id
+Control <- na.omit(matches$control.group.id) %>% as.numeric
 
+Treatment <- na.omit(matches$treatment.group.id) %>% as.numeric
 
 ```
 
 ```{r}
-control.fips <- new.dat$id2 [ Control ]
+control.fips <- df3$id2 [ Control ]
 
 dput(control.fips)
 ```
 
 
 ```{r}
-treatment.fips <- new.dat$id2 [ Treatment ]
+treatment.fips <- df3$id2 [ Treatment ]
 
 dput( treatment.fips )
 
