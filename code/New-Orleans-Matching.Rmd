@@ -238,20 +238,6 @@ head( new.dat, 34 )
 
 # Integrate matching code with map
 
-### Load New Orleans doeling
-
-
-```{r}
-library( geojsonio )
-library( sp )
-
-github.url <- "https://github.com/DS4PS/usa-dorling-shapefiles/raw/master/maps/metros-dorling/new-orleans-metairie-kenner-la-dorling-v2.geojson"
-no <- geojson_read( x=github.url,  what="sp" )
- 
-plot( no )
-
-
-```
 
 ### Create Treatment and Control vectors
 
@@ -270,6 +256,11 @@ treated.unmatched <- na.omit(id.treated.unmatched)  %>% as.numeric
 control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
 
 ```
+
+```{r}
+head(treatment.matched)
+```
+
 
 ```{r}
 # Matched
@@ -370,4 +361,29 @@ unmatched.fips <- c(22051027701, 22071000616, 22071001800, 22071002600, 22071003
 22103041300)
 ```
 
+### Load New Orleans dorling
+
+
+```{r}
+library( geojsonio )
+library( sp )
+
+github.url <- "https://github.com/DS4PS/usa-dorling-shapefiles/raw/master/maps/metros-dorling/new-orleans-metairie-kenner-la-dorling-v2.geojson"
+no <- geojson_read( x=github.url,  what="sp" )
+ 
+plot( no )
+
+
+```
+
+
+
+### Create color vectors based on matches 
+
+```{r}
+color.vector <- rep( "gray", nrow(new.dat) )
+color.vector[ new.dat$id2 %in% control.matched ] <- "blue"
+color.vector[ new.dat$id2 %in% treatment.matched ] <- "red"
+
+```
 
