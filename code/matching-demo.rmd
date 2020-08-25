@@ -1,6 +1,11 @@
 ---
 title: "New Market Tax Credits in New Orleans"
-output: html_document
+output:
+  html_document:
+    theme: readable
+    df_print: paged
+    highlight: tango
+    css: clean.css
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE, message=F, warning=F )
 library( dplyr )
 library( geojsonio )
 library( sp )
+library( pander )
 ```
 
 ```{r, echo=F}
@@ -222,9 +228,19 @@ Cases were matched to identify "twin" treated and untreated tracts in 2000 using
 
 We have created a data frame assigning each Census tract to a treated or untreated ("control") group, and designating whether we were able to identify a twin tract or not (match = TRUE or FALSE). 
 
-```{r}
-head( df )
+The matching procedure generates a balanced study dataset where 32 out of 54 tracts that received NMTC grants were paired with "untreated" doppelganger tracts (identical in 2000), making the post-treatment period comparisons in 2010 a more robust representation of true treatment effects. 
+
+```{r, echo=F}
+t <- 
+  structure(c(`control-matched` = 32L, `control-unmatched` = 306L, 
+`treated-matched` = 32L, `treated-unmatched` = 22L), .Dim = 4L, .Dimnames = list(
+    g = c("control-matched", "control-unmatched", "treated-matched", 
+    "treated-unmatched")), class = "table")
+
+t %>% pander()
 ```
+
+
 
 
 # Visualization of Matching 
@@ -251,6 +267,14 @@ plot( no, main="New Orleans Dorling Cartogram" )
 
 ### Assign group colors based on matches 
 
+Data frame containing group assignment: 
+
+```{r, echo=F}
+head( df )
+```
+
+Generation of color vectors associated with group membership: 
+
 ```{r}
 m2 <- ifelse( df$matched, "matched", "unmatched" )
 g <- paste( df$group, m2, sep="-" )
@@ -271,8 +295,7 @@ df$color.vector <- color.vector
 df$border.color <- border.color
 ```
 
-
-Merge group structure into New Orleans shapefile: 
+Merge group structure into the New Orleans shapefile: 
 
 
 ```{r, eval=F, echo=F}
@@ -283,7 +306,7 @@ head( no@data )
 NOLA <- merge( no, df, by.x="GEOID", by.y="FIPS", all.x=TRUE )
 ```
 
-
+Visually display matched cases: 
 
 ```{r, fig.height=10}
 par(mar=c(0,0,5,0))
