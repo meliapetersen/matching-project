@@ -1,0 +1,71 @@
+---
+title: "NMTC Data"
+author: "Jaesa Rogers"
+date: "8/26/2020"
+output: html_document
+---
+
+```{r}
+#load LTDB data
+d1 <- readRDS(here ( "data/data-rodeo/LTDB-2000.rds" ))
+d2 <- readRDS(here ( "data/data-rodeo/LTDB-2010.rds" ))
+md <- readRDS(here ( "data/data-rodeo/LTDB-META-DATA.rds" ))
+#clean data 
+d1 <- select( d1, - year )
+d2 <- select( d2, - year )
+d <- merge( d1, d2, by="tractid" )
+d <- merge( d, md, by="tractid" )
+#load NMTC data 
+URL1 <- "https://raw.githubusercontent.com/DS4PS/cpp-528-spr-2020/master/labs/data/raw/NMTC/nmtc-sheet-01.csv"
+nmtc <- read.csv( URL1, stringsAsFactors=F )
+# remove anything not a number from the string
+d$id2 <- gsub( "[^0-9]", "", d$tractid )
+# fix IDs so they are match
+d$id2 <- as.numeric( d$id2 )
+# need to convert from currency to numeric
+# current format: 
+# head( nmtc$QLICI.Amount )
+# [1] "$300,000.00 "   "$1,008,750.00 " "$977,000.00 "
+# remove dollar sign and commas
+nmtc$amount <- gsub( "[,$]", "", nmtc$QLICI.Amount )
+# head(  nmtc$amount  )
+# "300000.00 "  "1008750.00 " "977000.00 "
+# convert characters to numeric 
+nmtc$amount <- as.numeric( nmtc$amount ) %>% round(0)
+# head(  nmtc$amount  )
+# [1]  300000 1008750  977000
+nmtc.dollars <- 
+  nmtc %>% 
+  filter( Origination.Year >= 2000 & Origination.Year <= 2010 ) %>%
+  group_by( X2010.Census.Tract ) %>% 
+  summarize( num.nmtc=n(), nmtc.total = sum( amount, na.rm=T ) )
+d <- merge( d, nmtc.dollars, by.x="id2", by.y="X2010.Census.Tract", all.x=T )
+# recode tracts that had no grants from NA to 0
+d$num.nmtc[ is.na(d$num.nmtc) ] <- 0
+d$nmtc.total[ is.na(d$nmtc.total) ] <- 0
+#remove rural districts 
+d <- filter( d, urban == "urban" )
+```
+
+Create data frame for matching
+
+```{r}
+# create treatment variable
+treatment <- ifelse(d$nmtc.total>0, 1, 0)
+# add to dataframe
+d$treatment <- treatment
+# match nmtc as treatment (census tracts that recieved nmtc funding vs those that didn't)
+# and seek balance on other SES characteristics 
+## immigrants, high school education, home ownership, pop density (cpp 528 lab), tenure in the neighborhood
+df <- 
+  d %>% 
+  select( cbsa, id2, treatment, rent00, hinc00, pnhwht12, pnhblk12, phisp12, 
+              ppov12, punemp12,
+              hinc12, hincb12, hincw12, 
+              phs12, pcol12,
+              pown12, mhmval12 ) %>% 
+ filter( treatment %in% c( 1,0 ) ) %>% 
+ mutate( Treated = as.numeric( treatment == 1 ), 
+           Control =  as.numeric( treatment == 0 ))
+
+```
