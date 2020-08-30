@@ -70,9 +70,3 @@ df <-
 
 ```
 
-Turn into CSV
-
-```{r}
-write.csv(df, "rodeodNMTCdata.csv")
-```
-
