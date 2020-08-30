@@ -69,3 +69,4 @@ df <-
            Control =  as.numeric( treatment == 0 ))
 
 ```
+
