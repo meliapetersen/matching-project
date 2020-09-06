@@ -30,17 +30,20 @@ library( sp )
 df <- read.csv("rodeod-NMTC-data.csv")
 ```
 
+## FIRST FUNCTION
 
 ```{r}
-
-CBSA_names<- c(unique(crosswalk$cbsaname), crosswalk$cbsa)
-
-write.table( CBSA_names, "clipboard", row.names=T, sep='\t' )
-
-
+build_data_crosswalk <- function()
+{
+  
+  
+  
+}
+  
+  
 ```
 
-
+## SECOND FUNCTION
 
 ### matchit function 
 
@@ -56,21 +59,7 @@ build_matchit_metros <- function( cbsa, include.plot=TRUE )
 
   {
 
-	these.counties  <- df2$cbsa 
-	these.fips <- df2$id2[ these.counties ]
-	these.fips <- na.omit( these.fips )
 
-	state.fips <- substr( these.fips, 1, 2 )
-	county.fips <- substr( these.fips, 3, 5 )
-	
-	# test genetic search method
-# is time-intensive so test with a sample
-
-# set seeds if you want to reproduce the 
-# exact result in the future
-set.seed( seed=1234 )
-
-# create sample set for cities with high NMTC funding: New Orleans
 df3 <- df2  %>%  filter(cbsa %in% 35380)
 
 row.names(df3) <- df3$id2    
@@ -96,7 +85,11 @@ m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12,
 metro_matches <- build_matchit_metros()
 ```
 
-# Build dataframe vectors function
+
+
+## THIRD FUNCTION
+
+### Build dataframe vectors function
 
 ```{r}
 # match matrix is the length of the original treated groups
@@ -165,6 +158,7 @@ control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
 color_vectors <- build_color_vectors()
 ```
 
+## FOURTH FUNCTION
 
 ### Load dorling
 
@@ -174,9 +168,28 @@ color_vectors <- build_color_vectors()
 build_plot_function <- function(color_vectors)
 
 {
+  ### dorling function
 
-github.url <- "https://github.com/DS4PS/usa-dorling-shapefiles/raw/master/maps/metros-dorling/new-orleans-metairie-kenner-la-dorling-v2.geojson"
-no <- geojson_read( x=github.url,  what="sp" )
+get_dorling <- function( cbsa = cbsa )
+{
+
+   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
+   dorlings <- read.csv( dorlings.url )
+
+   file.name <- dorlings$shapefile[ dorlings$cbsa == cbsa ]
+   # file.name <- "albany-schenectady-troy-ny-dorling-v2.geojson"
+
+   base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
+
+   full.url <- paste0( base.url, file.name )
+
+   map <- geojsonio::geojson_read( x=full.url,  what="sp" )
+
+   plot( map )
+
+   return( map )
+   
+}
 
 
 
