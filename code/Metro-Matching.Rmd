@@ -24,24 +24,61 @@ library( geojsonio )
 library( sp )
 ```
 
-```{r}
-#load dataframe
-
-df <- read.csv("rodeod-NMTC-data.csv")
-```
 
 ## FIRST FUNCTION
 
 ```{r}
-build_data_crosswalk <- function()
+
+  ### dorling function
+
+get_dorling <- function( cbsa )
 {
-  
-  
-  
+
+   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
+   dorlings <- read.csv( dorlings.url )
+
+   file.name <- dorlings$shapefile[ dorlings$cbsa == cbsa ]
+ 
+
+   base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
+
+   full.url <- paste0( base.url, file.name )
+
+   map <- geojsonio::geojson_read( x=full.url,  what="sp" )
+
+   plot( map )
+
+   return( map )
+   
 }
+
   
-  
+albany.cbsa <- 10580
+
+dorling.object <- get_dorling(cbsa=albany.cbsa)
+
+
 ```
+
+```{r}
+
+
+df.treatment <- read.csv("rodeod-NMTC-data.csv")
+df.census <- dorling.object@data
+
+df.census$GEOID <- as.numeric(as.character((df.census$GEOID)))
+
+#merge leftjoin
+df.rodeo <- left_join(df.treatment, df.census, by.x = "id2", by.y = "GEOID")
+
+# create treatment variable
+df.rodeo.treatment <- ifelse(df.rodeo$nmtc.total>0, 1, 0)
+
+return(df.rodeo.treatment)
+
+
+```
+
 
 ## SECOND FUNCTION
 
@@ -55,24 +92,22 @@ results
 
 ```{r}
 
-build_matchit_metros <- function( cbsa, include.plot=TRUE )
+build_matchit_metros <- function( df, include.plot=TRUE )
 
   {
 
 
-df3 <- df2  %>%  filter(cbsa %in% 35380)
-
-row.names(df3) <- df3$id2    
-df3 <- na.omit( df3 )
+row.names(df) <- df$id2    
+df <- na.omit( df )
 
 # df3$cbsa.f <- factor(df3$cbsa)      
                  
-table( df3$treatment )
+table( df$treatment )
 
 
 m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
-               replace=FALSE, caliper=.25, data = df3 )
+               replace=FALSE, caliper=.25, data = df )
 
 	}
 
@@ -82,7 +117,7 @@ m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12,
 # Run matchit_metro function
 
 ```{r}
-metro_matches <- build_matchit_metros()
+matchit.object <- build_matchit_metros()
 ```
 
 
@@ -95,7 +130,7 @@ metro_matches <- build_matchit_metros()
 # match matrix is the length of the original treated groups
 # IDs are rows of the original dataset
 
-build_color_vectors <- function(metro_matches)
+build_color_vectors <- function(matchit.object)
 
 {
 
@@ -155,7 +190,7 @@ control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
 ```
 
 ```{r}
-color_vectors <- build_color_vectors()
+color.vector.object <- build_color_vectors()
 ```
 
 ## FOURTH FUNCTION
@@ -165,43 +200,21 @@ color_vectors <- build_color_vectors()
 
 ```{r}
 
-build_plot_function <- function(color_vectors)
+build_plot_function <- function(color.vector.object)
 
 {
-  ### dorling function
-
-get_dorling <- function( cbsa = cbsa )
-{
-
-   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
-   dorlings <- read.csv( dorlings.url )
-
-   file.name <- dorlings$shapefile[ dorlings$cbsa == cbsa ]
-   # file.name <- "albany-schenectady-troy-ny-dorling-v2.geojson"
-
-   base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
-
-   full.url <- paste0( base.url, file.name )
-
-   map <- geojsonio::geojson_read( x=full.url,  what="sp" )
-
-   plot( map )
-
-   return( map )
-   
-}
 
 
 
 ### Create color vectors based on matches
 
-color.vector <- rep( "gray", nrow(df3) )
+color.vector <- rep( "gray", nrow(df) )
 color.vector[ df3$id2 %in% control.matched ] <- "blue"
 color.vector[ df3$id2 %in% treated.matched ] <- "darkred"
 color.vector[ df3$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
 
 
-border.color <- rep( "gray40", nrow(df3) )
+border.color <- rep( "gray40", nrow(df) )
 border.color [ df3$id2 %in% treated.unmatched ] <- "darkred"
 
 lat <- rnorm(1000)
