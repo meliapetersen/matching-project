@@ -53,30 +53,45 @@ get_dorling <- function( cbsa )
 }
 
   
-albany.cbsa <- 10580
+metro.cbsa <- 10580
 
-dorling.object <- get_dorling(cbsa=albany.cbsa)
+dorling.object <- get_dorling(cbsa=metro.cbsa)
+
+
+```
+
+
+## SECOND FUNCTION
+
+
+
+```{r}
+
+### Rodeo data function 
+
+rodeo_data <- function (df.treatment, df.census)
+   {
+
+df.treatment <- read.csv("rodeod-NMTC-data.csv")
+df.census <- dorling.object@data
+
+#df.census$GEOID <- as.numeric(as.character((df.census$GEOID)))
+
+#merge leftjoin
+df.rodeo <- merge(df.treatment, df.census, by.x="id2", by.y="GEOID", all.x=TRUE)
+
+#transform dataframe into specific dataframe for cbsa called in first function
+df.rodeo.metro <- filter (df.treatment, cbsa == metro.cbsa)
+
+}
+
+head(df.rodeo.metro)
 
 
 ```
 
 ```{r}
-
-
-df.treatment <- read.csv("rodeod-NMTC-data.csv")
-df.census <- dorling.object@data
-
-df.census$GEOID <- as.numeric(as.character((df.census$GEOID)))
-
-#merge leftjoin
-df.rodeo <- left_join(df.treatment, df.census, by.x = "id2", by.y = "GEOID")
-
-# create treatment variable
-df.rodeo.treatment <- ifelse(df.rodeo$nmtc.total>0, 1, 0)
-
-return(df.rodeo.treatment)
-
-
+rodeo.metro <- rodeo_data()
 ```
 
 
@@ -92,22 +107,31 @@ results
 
 ```{r}
 
-build_matchit_metros <- function( df, include.plot=TRUE )
+build_matchit_metros <- function( df.rodeo.metro, m5 )
 
   {
 
+   
+   
+# omit NAs
+row.names(df.rodeo.metro) <- df.rodeo.metro$id2    
+df.rodeo.metro <- na.omit( df.rodeo.metro )
 
-row.names(df) <- df$id2    
-df <- na.omit( df )
-
-# df3$cbsa.f <- factor(df3$cbsa)      
-                 
-table( df$treatment )
+# factor for called CBSA
+# df.rodeo.metro$cbsa.f <- factor(df.rodeo.metro$cbsa)      
 
 
-m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
+          
+table( df.rodeo.metro$treatment )
+
+
+
+# find matches in dataframe based on Household income, college education, and whiteness    
+ m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
-               replace=FALSE, caliper=.25, data = df )
+               replace=FALSE, caliper=.25, data = df.rodeo.metro )
+
+
 
 	}
 
@@ -143,7 +167,7 @@ id.all.treated <- matches$treatment.group.id
 id.treated.matched <- matches$treatment.group.id[!these.na]
 id.treated.unmatched <- matches$treatment.group.id[these.na]
 id.control.matched <- na.omit(matches$control.group.id)
-id.control.unmatched <- df3$id2 [ !(df3$id2 %in% id.all.treated | df3$id2 %in% id.control.matched)]
+id.control.unmatched <- df.rodeo$id2 [ !(df.rodeo$id2 %in% id.all.treated | df.rodeo$id2 %in% id.control.matched)]
 
 df.x <- data.frame(Fips = id.treated.matched, group = "treated", matched = TRUE)
 df.x
@@ -209,13 +233,13 @@ build_plot_function <- function(color.vector.object)
 ### Create color vectors based on matches
 
 color.vector <- rep( "gray", nrow(df) )
-color.vector[ df3$id2 %in% control.matched ] <- "blue"
-color.vector[ df3$id2 %in% treated.matched ] <- "darkred"
-color.vector[ df3$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
+color.vector[ df.rodeo.metro$id2 %in% control.matched ] <- "blue"
+color.vector[ df.rodeo.metro$id2 %in% treated.matched ] <- "darkred"
+color.vector[ df.rodeo.metro$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
 
 
 border.color <- rep( "gray40", nrow(df) )
-border.color [ df3$id2 %in% treated.unmatched ] <- "darkred"
+border.color [ df.rodeo.metro$id2 %in% treated.unmatched ] <- "darkred"
 
 lat <- rnorm(1000)
 quantile( lat, c( 0.25, 0.75 ) )
