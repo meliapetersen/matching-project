@@ -85,17 +85,21 @@ df.rodeo.metro <- filter (df.treatment, cbsa == metro.cbsa)
 
 }
 
-head(df.rodeo.metro)
-
 
 ```
+
 
 ```{r}
 rodeo.metro <- rodeo_data()
 ```
 
+```{r}
+head(rodeo.metro)
 
-## SECOND FUNCTION
+```
+
+
+## THIRD FUNCTION
 
 ### matchit function 
 
@@ -107,29 +111,27 @@ results
 
 ```{r}
 
-build_matchit_metros <- function( df.rodeo.metro, m5 )
+build_matchit_metros <- function( rodeo.metro)
 
   {
 
-   
-   
 # omit NAs
-row.names(df.rodeo.metro) <- df.rodeo.metro$id2    
-df.rodeo.metro <- na.omit( df.rodeo.metro )
+row.names(rodeo.metro) <- rodeo.metro$id2    
+rodeo.metro <- na.omit( rodeo.metro )
 
 # factor for called CBSA
 # df.rodeo.metro$cbsa.f <- factor(df.rodeo.metro$cbsa)      
 
 
           
-table( df.rodeo.metro$treatment )
+table( rodeo.metro$treatment )
 
 
 
 # find matches in dataframe based on Household income, college education, and whiteness    
  m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
                method="genetic", discard="both", reestimate=TRUE, 
-               replace=FALSE, caliper=.25, data = df.rodeo.metro )
+               replace=FALSE, caliper=.25, data = rodeo.metro )
 
 
 
@@ -146,7 +148,7 @@ matchit.object <- build_matchit_metros()
 
 
 
-## THIRD FUNCTION
+## FOURTH FUNCTION
 
 ### Build dataframe vectors function
 
@@ -154,7 +156,7 @@ matchit.object <- build_matchit_metros()
 # match matrix is the length of the original treated groups
 # IDs are rows of the original dataset
 
-build_color_vectors <- function(matchit.object)
+build_color_vectors <- function( matchit.object )
 
 {
 
@@ -167,7 +169,7 @@ id.all.treated <- matches$treatment.group.id
 id.treated.matched <- matches$treatment.group.id[!these.na]
 id.treated.unmatched <- matches$treatment.group.id[these.na]
 id.control.matched <- na.omit(matches$control.group.id)
-id.control.unmatched <- df.rodeo$id2 [ !(df.rodeo$id2 %in% id.all.treated | df.rodeo$id2 %in% id.control.matched)]
+id.control.unmatched <- rodeo.metro$id2 [ !(rodeo.metro$id2 %in% id.all.treated | rodeo.metro$id2 %in% id.control.matched)]
 
 df.x <- data.frame(Fips = id.treated.matched, group = "treated", matched = TRUE)
 df.x
@@ -217,7 +219,7 @@ control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
 color.vector.object <- build_color_vectors()
 ```
 
-## FOURTH FUNCTION
+## FIFTH FUNCTION
 
 ### Load dorling
 
@@ -233,13 +235,13 @@ build_plot_function <- function(color.vector.object)
 ### Create color vectors based on matches
 
 color.vector <- rep( "gray", nrow(df) )
-color.vector[ df.rodeo.metro$id2 %in% control.matched ] <- "blue"
-color.vector[ df.rodeo.metro$id2 %in% treated.matched ] <- "darkred"
-color.vector[ df.rodeo.metro$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
+color.vector[ rodeo.metro$id2 %in% control.matched ] <- "blue"
+color.vector[ rodeo.metro$id2 %in% treated.matched ] <- "darkred"
+color.vector[ rodeo.metro$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
 
 
 border.color <- rep( "gray40", nrow(df) )
-border.color [ df.rodeo.metro$id2 %in% treated.unmatched ] <- "darkred"
+border.color [ rodeo.metro$id2 %in% treated.unmatched ] <- "darkred"
 
 lat <- rnorm(1000)
 quantile( lat, c( 0.25, 0.75 ) )
