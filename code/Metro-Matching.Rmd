@@ -89,23 +89,17 @@ df.rodeo.metro <- na.omit( df.rodeo.metro )
 
 }
 
-head(df.rodeo.metro)
-
-
-<<<<<<< Updated upstream
 ```
 
 ```{r}
-rodeo.metro <- rodeo_data()
-=======
-```{r}
+# create specific metro data object
+
 rodeo.metro.i <- rodeo_data()
 ```
 
 ```{r}
 head(rodeo.metro.i)
 
->>>>>>> Stashed changes
 ```
 
 
@@ -121,24 +115,6 @@ results
 
 ```{r}
 
-<<<<<<< Updated upstream
-build_matchit_metros <- function( df.rodeo.metro, m5 )
-
-  {
-
-   
-   
-# omit NAs
-row.names(df.rodeo.metro) <- df.rodeo.metro$id2    
-df.rodeo.metro <- na.omit( df.rodeo.metro )
-
-# factor for called CBSA
-# df.rodeo.metro$cbsa.f <- factor(df.rodeo.metro$cbsa)      
-
-
-          
-table( df.rodeo.metro$treatment )
-=======
 build_matchit_metros <- function(data = rodeo.metro.i)
 
   {
@@ -147,30 +123,19 @@ build_matchit_metros <- function(data = rodeo.metro.i)
 # factor for called CBSA
 # df.rodeo.metro$cbsa.f <- factor(df.rodeo.metro$cbsa)      
 # table( rodeo.metro$treatment )
->>>>>>> Stashed changes
 
 
 
 # find matches in dataframe based on Household income, college education, and whiteness    
  m5 <- matchit( treatment ~ hinc12, 
-               method="genetic", discard="both", reestimate=TRUE, 
-<<<<<<< Updated upstream
-               replace=FALSE, caliper=.25, data = df.rodeo.metro )
-=======
-               replace=FALSE, caliper=.25, data = rodeo.metro.i )
->>>>>>> Stashed changes
-
+               method="genetic", discard="both", reestimate=TRUE,
+                 replace=FALSE, caliper=.25, data = rodeo.metro.i)
 
 
 	}
 
 
 ```
-
-```{r}
-summary(m5)
-```
-
 
 
 # Run matchit_metro function
@@ -189,12 +154,12 @@ matchit.object <- build_matchit_metros(data = rodeo.metro.i)
 # match matrix is the length of the original treated groups
 # IDs are rows of the original dataset
 
-build_color_vectors <- function(matchit.object)
+build_colored_map <- function(data = matchit.object)
 
 {
 
-matches <- data.frame( treatment.group.id=row.names( m5$match.matrix), 
-                       control.group.id=m5$match.matrix )
+matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
+                       control.group.id=matchit.object$match.matrix )
 
 these.na <- is.na(matches$control.group.id)
 
@@ -202,14 +167,10 @@ id.all.treated <- matches$treatment.group.id
 id.treated.matched <- matches$treatment.group.id[!these.na]
 id.treated.unmatched <- matches$treatment.group.id[these.na]
 id.control.matched <- na.omit(matches$control.group.id)
-<<<<<<< Updated upstream
-id.control.unmatched <- df.rodeo$id2 [ !(df.rodeo$id2 %in% id.all.treated | df.rodeo$id2 %in% id.control.matched)]
-=======
 id.control.unmatched <- rodeo.metro.i$id2 [ !(rodeo.metro.i$id2 %in% id.all.treated | rodeo.metro.i$id2 %in% id.control.matched)]
->>>>>>> Stashed changes
 
-df.x <- data.frame(Fips = id.treated.matched, group = "treated", matched = TRUE)
-df.x
+# df.x <- data.frame(Fips = id.treated.matched, group = "treated", matched = TRUE)
+# df.x
 
 # rowbind
 
@@ -221,15 +182,15 @@ sum(is.na(matches$control.group.id))
 m5$nn
 
 # all treated cases in dataset:
-length( m5$match.matrix )
+length( matchit.object$match.matrix )
 
 # treated cases that were matched: 
-sum( ! is.na(m5$match.matrix) )
+sum( ! is.na(matchit.object$match.matrix) )
 
 ### Extract balanced dataset 
 
 
-new.dat <- match.data( m5 )
+new.dat <- match.data( matchit.object )
 dim( new.dat ) # 2 x number in matched treatment group
 
 
@@ -244,7 +205,6 @@ control.matched <- na.omit(id.control.matched) %>% as.numeric
 treated.unmatched <- na.omit(id.treated.unmatched)  %>% as.numeric
 control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
 
-
 ### Create color vectors based on matches
 
 color.vector <- rep( "gray", nrow(df) )
@@ -256,41 +216,6 @@ color.vector[ rodeo.metro.i$id2 %in% treated.unmatched ] <- adjustcolor( "darkre
 border.color <- rep( "gray40", nrow(df) )
 border.color [ rodeo.metro.i$id2 %in% treated.unmatched ] <- "darkred"
 
-
-}
-```
-
-```{r}
-color.vector.object <- build_color_vectors()
-```
-
-## FOURTH FUNCTION
-
-### Load dorling
-
-
-```{r}
-
-build_plot_function <- function(color.vector.object)
-
-{
-
-
-<<<<<<< Updated upstream
-
-### Create color vectors based on matches
-
-color.vector <- rep( "gray", nrow(df) )
-color.vector[ df.rodeo.metro$id2 %in% control.matched ] <- "blue"
-color.vector[ df.rodeo.metro$id2 %in% treated.matched ] <- "darkred"
-color.vector[ df.rodeo.metro$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
-
-
-border.color <- rep( "gray40", nrow(df) )
-border.color [ df.rodeo.metro$id2 %in% treated.unmatched ] <- "darkred"
-
-=======
->>>>>>> Stashed changes
 lat <- rnorm(1000)
 quantile( lat, c( 0.25, 0.75 ) )
 
@@ -300,13 +225,13 @@ xlim=quantile( lat, c(0.25,0.75) )
 
 par(mar=c(0,0,0,0))
 
-plot(no, col= color.vector, border=border.color)
+plot(dorling.object, col= color.vector, border=border.color)
+
 
 }
-
 ```
 
 ```{r}
-plot_map <- build_plot_function()
+colored.map <- build_colored_map()
 ```
 
