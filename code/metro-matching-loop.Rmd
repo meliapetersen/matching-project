@@ -179,7 +179,7 @@ matches <- na.omit(matches)
 sum(is.na(matches$control.group.id))
 
 
-m5$nn
+matchit.object$nn
 
 # all treated cases in dataset:
 length( matchit.object$match.matrix )
@@ -207,13 +207,13 @@ control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
 
 ### Create color vectors based on matches
 
-color.vector <- rep( "gray", nrow(df) )
+color.vector <- rep( "gray", nrow(rodeo.metro.i) )
 color.vector[ rodeo.metro.i$id2 %in% control.matched ] <- "blue"
 color.vector[ rodeo.metro.i$id2 %in% treated.matched ] <- "darkred"
 color.vector[ rodeo.metro.i$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
 
 
-border.color <- rep( "gray40", nrow(df) )
+border.color <- rep( "gray40", nrow(rodeo.metro.i) )
 border.color [ rodeo.metro.i$id2 %in% treated.unmatched ] <- "darkred"
 
 lat <- rnorm(1000)
