@@ -75,8 +75,6 @@ rodeo_data <- function (df.treatment, df.census)
 df.treatment <- read.csv("rodeod-NMTC-data.csv")
 df.census <- dorling.object@data
 
-#df.census$GEOID <- as.numeric(as.character((df.census$GEOID)))
-
 #merge leftjoin
 df.rodeo <- merge(df.treatment, df.census, by.x="id2", by.y="GEOID", all.x=TRUE)
 
@@ -119,18 +117,10 @@ build_matchit_metros <- function(data = rodeo.metro.i)
 
   {
 
-
-# factor for called CBSA
-# df.rodeo.metro$cbsa.f <- factor(df.rodeo.metro$cbsa)      
-# table( rodeo.metro$treatment )
-
-
-
 # find matches in dataframe based on Household income, college education, and whiteness    
  m5 <- matchit( treatment ~ hinc12, 
                method="genetic", discard="both", reestimate=TRUE,
                  replace=FALSE, caliper=.25, data = rodeo.metro.i)
-
 
 	}
 
@@ -188,16 +178,11 @@ length( matchit.object$match.matrix )
 sum( ! is.na(matchit.object$match.matrix) )
 
 ### Extract balanced dataset 
-
-
 new.dat <- match.data( matchit.object )
 dim( new.dat ) # 2 x number in matched treatment group
 
 
-
-
 ### Create Treatment and Control vectors
-
 
 treated.matched <- na.omit(id.treated.matched) %>% as.numeric
 control.matched <- na.omit(id.control.matched) %>% as.numeric
@@ -212,7 +197,6 @@ color.vector[ rodeo.metro.i$id2 %in% control.matched ] <- "blue"
 color.vector[ rodeo.metro.i$id2 %in% treated.matched ] <- "darkred"
 color.vector[ rodeo.metro.i$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
 
-
 border.color <- rep( "gray40", nrow(rodeo.metro.i) )
 border.color [ rodeo.metro.i$id2 %in% treated.unmatched ] <- "darkred"
 
@@ -222,15 +206,35 @@ quantile( lat, c( 0.25, 0.75 ) )
 # in the plot function
 xlim=quantile( lat, c(0.25,0.75) )
 
-
 par(mar=c(0,0,0,0))
 
 plot(dorling.object, col= color.vector, border=border.color)
 
-
 }
+
 ```
 
 ```{r}
 colored.map <- build_colored_map()
 ```
+
+## Create loop for all CBSAs 
+
+```{r}
+
+# prep data for the loop? how do we test? 
+
+ test.metros <- 
+
+
+for( i in test.metros  )
+{
+  metro.i <- build_colored_map( test.metros )
+  
+}
+
+```
+
+
+
+
