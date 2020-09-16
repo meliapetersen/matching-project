@@ -31,13 +31,24 @@ library( sp )
 
   ### dorling function
 
-get_dorling <- function( cbsa )
+load_crosswalk <- function( )
+{
+   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
+   dorlings.catalog <- read.csv( dorlings.url )
+   return( dorlings.catalog )
+}
+
+dorlings.catalog <- load_crosswalk()
+
+
+
+get_dorling <- function( cbsa, dorlings.catalog=NULL )
 {
 
-   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
-   dorlings <- read.csv( dorlings.url )
+   if( is.null(dorlings.catalog) ){ dorlings.catalog <- load_crosswalk() }
 
-   file.name <- dorlings$shapefile[ dorlings$cbsa == cbsa ]
+
+   file.name <- dorlings.catalog$shapefile[ dorlings.catalog$cbsa == cbsa ]
  
 
    base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
@@ -55,11 +66,10 @@ get_dorling <- function( cbsa )
   
 metro.cbsa <- 10580
 
-dorling.object <- get_dorling(cbsa=metro.cbsa)
+dorling.object <- get_dorling( cbsa=metro.cbsa )
 
 
 ```
-
 
 ## SECOND FUNCTION
 
