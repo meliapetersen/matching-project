@@ -73,79 +73,77 @@ dorling.object <- get_dorling( cbsa=metro.cbsa )
 
 ## SECOND FUNCTION
 
-
-
 ```{r}
 
 ### Rodeo data function 
 
-rodeo_data <- function (df.treatment, df.census)
-   {
+df.treatment <- read.csv("rodeod-treatment-data.csv")
+# df.census <- dorling.object@data
 
-df.treatment <- read.csv("rodeod-NMTC-data.csv")
-df.census <- dorling.object@data
 
-#merge leftjoin
-df.rodeo <- merge(df.treatment, df.census, by.x="id2", by.y="GEOID", all.x=TRUE)
+add_treatment <- function( df.treatment, dorling.object )
+{
 
-#transform dataframe into specific dataframe for cbsa called in first function
-df.rodeo.metro <- filter (df.treatment, cbsa == metro.cbsa)
+  # merge leftjoin
+  dorling.object <- merge( dorling.object, df.treatment, by.x="GEOID", by.y="id2", all.x=TRUE )
+  
 
-# omit NAs
-row.names(df.rodeo.metro) <- df.rodeo.metro$id2    
-df.rodeo.metro <- na.omit( df.rodeo.metro )
+
+  # x <- c( 1, NA, NA, 1, NA, NA )
+  # 
+  # omit NAs
+  treatment <- dorling.object$treatment 
+  treatment[ is.na(treatment) ] <- 0
+  dorling.object$treatment <- treatment
+ 
+  # row.names(df.rodeo.metro) <- df.rodeo.metro$id2    
+  # df.rodeo.metro <- na.omit( df.rodeo.metro )
+
+  return( dorling.object )
+}
+
+dorling.object <- add_treatment( df.treatment, dorling.object ) 
+
+```
+
+
+```{r}
+head(df.treatment)
+```
+
+
+```{r}
+head(dorling.object)
+
+```
+## SECOND FUNCTION
+
+### matchit function 
+```{r}
+
+fo <- as.formula( "treatment ~ own00" )
+
+build_matchit_metros <- function( fo, dorling.object )
+{
+   matchit.object <- NULL
+
+   # find matches in dataframe based on Household income, college education, and whiteness 
+   try(   
+      matchit.object <- matchit( fo, 
+                        method="genetic", discard="both", reestimate=TRUE,
+                        replace=FALSE, caliper=.25, data = dorling.object )
+   )
+
+   return( matchit.object )
 
 }
 
 ```
 
 ```{r}
-# create specific metro data object
 
-rodeo.metro.i <- rodeo_data()
+matchit.object <- build_matchit_metros( dorling.object ) 
 ```
-
-```{r}
-head(rodeo.metro.i)
-
-```
-
-
-## SECOND FUNCTION
-
-### matchit function 
-
-
-**NOTE** the long output printed while the algorithm runs. Add code chunk option
-
-results 
-
-
-```{r}
-
-build_matchit_metros <- function(fo = treatment ~ hinc12 + pcol12, data = rodeo.metro.i) 
-
-   
-  {
-   
-# find matches in dataframe based on Household income, college education, and whiteness    
- m5 <- matchit( fo, 
-               method="genetic", discard="both", reestimate=TRUE,
-                 replace=FALSE, caliper=.25, data = rodeo.metro.i)
-
-	}
-
-
-```
-
-
-
-# Run matchit_metro function
-
-```{r}
-matchit.object <- build_matchit_metros(data = rodeo.metro.i)
-```
-
 
 
 ## THIRD FUNCTION
@@ -156,20 +154,19 @@ matchit.object <- build_matchit_metros(data = rodeo.metro.i)
 # match matrix is the length of the original treated groups
 # IDs are rows of the original dataset
 
-build_colored_map <- function(data = matchit.object)
-
+build_colored_map <- function( matchit.object )
 {
 
-matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
+  matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
                        control.group.id=matchit.object$match.matrix )
 
-these.na <- is.na(matches$control.group.id)
+  these.na <- is.na(matches$control.group.id)
 
-id.all.treated <- matches$treatment.group.id 
-id.treated.matched <- matches$treatment.group.id[!these.na]
-id.treated.unmatched <- matches$treatment.group.id[these.na]
-id.control.matched <- na.omit(matches$control.group.id)
-id.control.unmatched <- rodeo.metro.i$id2 [ !(rodeo.metro.i$id2 %in% id.all.treated | rodeo.metro.i$id2 %in% id.control.matched)]
+  id.all.treated <- matches$treatment.group.id 
+  id.treated.matched <- matches$treatment.group.id[!these.na]
+  id.treated.unmatched <- matches$treatment.group.id[these.na]
+  id.control.matched <- na.omit(matches$control.group.id)
+  id.control.unmatched <- rodeo.metro.i$id2 [ !(rodeo.metro.i$id2 %in% id.all.treated | rodeo.metro.i$id2 %in% id.control.matched)]
 
 # df.x <- data.frame(Fips = id.treated.matched, group = "treated", matched = TRUE)
 # df.x
@@ -229,173 +226,31 @@ plot(dorling.object, col= color.vector, border=border.color)
 ```{r}
 colored.map <- build_colored_map()
 ```
-
-
 
 ## Create loop for all CBSAs 
 
-
 ```{r}
 
-test.metros <- c(10580, 35380) 
+# prep data for the loop? how do we test? 
 
-for( i in test.metros )
-   
+dorlings.catalog <- load_crosswalk()
+
+cbsa.list <- unique( dorlings.catalog$cbsa )
+
+for( i in cbsa.list )
 {
-
-## FIRST FUNCTION
-### dorling function
-
-get_dorling <- function( i )
-{
-
-   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
-   dorlings <- read.csv( dorlings.url )
-
-   file.name <- dorlings$shapefile[ dorlings$cbsa == cbsa ]
- 
-
-   base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
-
-   full.url <- paste0( base.url, file.name )
-
-   map <- geojsonio::geojson_read( x=full.url,  what="sp" )
-
-   plot( map )
-
-   return( map )
-   
-}
-
-  
-# metro.cbsa <- 10580
-dorling.object <- get_dorling(cbsa=test.metros)
-
-
-### Rodeo data function 
-
-rodeo_data <- function (df.treatment, dorling.object)
-   {
-
-df.treatment <- read.csv("rodeod-NMTC-data.csv")
-df.census <- dorling.object@data
-
-#merge leftjoin
-df.rodeo <- merge(df.treatment, df.census, by.x="id2", by.y="GEOID", all.x=TRUE)
-
-#transform dataframe into specific dataframe for cbsa called in first function
-df.rodeo.metro <- filter (df.treatment, cbsa == metro.cbsa)
-
-# omit NAs
-row.names(df.rodeo.metro) <- df.rodeo.metro$id2    
-df.rodeo.metro <- na.omit( df.rodeo.metro )
+   dorling.object.i <- get_dorling( cbsa=i, dorlings.catalog )
+   dorling.object.i <- add_treatment( df.treatment, dorling.object.i )
+   rodeo.data.i <- dorling.object.i@data
+   fo <- as.formula( "treatment ~ hinc12" )
+   matchit.model <- build_matchit_metros( fo=fo, rodeo.df=rodeo.data.i )
+   build_colored_map( matchit.object=matchit.model )
 
 }
-
-# create specific metro data object
-
-rodeo.metro.i <- rodeo_data()
-
-head(rodeo.metro.i)
-
-## SECOND FUNCTION
-### matchit function 
-
-# **NOTE** the long output printed while the algorithm runs. Add code chunk option
-
-build_matchit_metros <- function(data = rodeo.metro.i)
-
-  {
-
-# find matches in dataframe based on Household income, college education, and whiteness    
- m5 <- matchit( treatment ~ hinc12, 
-               method="genetic", discard="both", reestimate=TRUE,
-                 replace=FALSE, caliper=.25, data = rodeo.metro.i)
-
-	}
-
-# Run matchit_metro function
-matchit.object <- build_matchit_metros(data = rodeo.metro.i)
-
-## THIRD FUNCTION
-### Build dataframe vectors function
-
-# match matrix is the length of the original treated groups
-# IDs are rows of the original dataset
-
-build_colored_map <- function(data = matchit.object)
-
-{
-
-matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
-                       control.group.id=matchit.object$match.matrix )
-
-these.na <- is.na(matches$control.group.id)
-
-id.all.treated <- matches$treatment.group.id 
-id.treated.matched <- matches$treatment.group.id[!these.na]
-id.treated.unmatched <- matches$treatment.group.id[these.na]
-id.control.matched <- na.omit(matches$control.group.id)
-id.control.unmatched <- rodeo.metro.i$id2 [ !(rodeo.metro.i$id2 %in% id.all.treated | rodeo.metro.i$id2 %in% id.control.matched)]
-
-# df.x <- data.frame(Fips = id.treated.matched, group = "treated", matched = TRUE)
-# df.x
-
-# rowbind
-
-matches <- na.omit(matches)
-
-sum(is.na(matches$control.group.id))
-
-matchit.object$nn
-
-# all treated cases in dataset:
-length( matchit.object$match.matrix )
-
-# treated cases that were matched: 
-sum( ! is.na(matchit.object$match.matrix) )
-
-### Extract balanced dataset 
-new.dat <- match.data( matchit.object )
-dim( new.dat ) # 2 x number in matched treatment group
-
-### Create Treatment and Control vectors
-
-treated.matched <- na.omit(id.treated.matched) %>% as.numeric
-control.matched <- na.omit(id.control.matched) %>% as.numeric
-
-treated.unmatched <- na.omit(id.treated.unmatched)  %>% as.numeric
-control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
-
-### Create color vectors based on matches
-
-color.vector <- rep( "gray", nrow(rodeo.metro.i) )
-color.vector[ rodeo.metro.i$id2 %in% control.matched ] <- "blue"
-color.vector[ rodeo.metro.i$id2 %in% treated.matched ] <- "darkred"
-color.vector[ rodeo.metro.i$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
-
-border.color <- rep( "gray40", nrow(rodeo.metro.i) )
-border.color [ rodeo.metro.i$id2 %in% treated.unmatched ] <- "darkred"
-
-lat <- rnorm(1000)
-quantile( lat, c( 0.25, 0.75 ) )
-
-# in the plot function
-xlim=quantile( lat, c(0.25,0.75) )
-
-par(mar=c(0,0,0,0))
-
-plot(dorling.object, col= color.vector, border=border.color)
-
-}
-
-colored.map <- build_colored_map()
-
-}
-
 
 
 ```
+
 
 
 
