@@ -159,7 +159,7 @@ matchit.object <- build_matchit_metros( fo, df )
 # match matrix is the length of the original treated groups
 # IDs are rows of the original dataset
 
-build_colored_map <- function( matchit.object, dorling.object )
+build_color_vectors <-  function( matchit.object, dorling.object )
 
 {
 
@@ -216,7 +216,20 @@ control.matched <- na.omit(id.control.matched) %>% as.numeric
 treated.unmatched <- na.omit(id.treated.unmatched)  %>% as.numeric
 control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
 
+  }
 
+```
+
+```{r}
+color.vector.object <- build_color_vectors(matchit.object, dorling.object)
+```
+
+
+```{r}
+
+build_colored_map <- function(color.vector.object, dorling.object)
+   
+{
 
 
 status <- rep( "control.unmatched", nrow( dorling.object ) )
@@ -256,7 +269,7 @@ plot(dorling.object, col= color.vector, border=border.color)
 ```
 
 ```{r}
-colored.map <- build_colored_map( matchit.object, dorling.object )
+colored.map <- build_colored_map( color.vector.object, dorling.object )
 ```
 
 ## Create loop for all CBSAs 
@@ -276,7 +289,8 @@ for( i in cbsa.list )
    rodeo.data.i <- dorling.object.i@data
    fo <- as.formula( "treatment ~ own00" )
    matchit.model <- build_matchit_metros( fo=fo, df=rodeo.data.i)
-   build_colored_map( matchit.object=matchit.model, dorling.object=dorling.object.i)
+   vector.model <- build_color_vectors(matchit.object=matchit.model, dorling.object=dorling.object.i)
+   build_colored_map( color.vector.object=vector.model, dorling.object=dorling.object.i )
 
 }
 
