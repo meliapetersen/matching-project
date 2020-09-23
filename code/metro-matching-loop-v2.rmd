@@ -160,8 +160,19 @@ matchit.object <- build_matchit_metros( fo, df )
 # IDs are rows of the original dataset
 
 build_colored_map <- function( matchit.object, dorling.object )
+
 {
 
+  if( is.null(matchit.object) )
+  { plot( 0,0, main="No counterfactual for the treatment available" ) }
+   
+}
+
+  if( ! is.null(matchit.object) )  
+   
+   {
+
+   
   matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
                        control.group.id=matchit.object$match.matrix )
 
@@ -265,7 +276,7 @@ for( i in cbsa.list )
    rodeo.data.i <- dorling.object.i@data
    fo <- as.formula( "treatment ~ own00" )
    matchit.model <- build_matchit_metros( fo=fo, df=rodeo.data.i)
-   build_colored_map( matchit.object=matchit.model )
+   build_colored_map( matchit.object=matchit.model, dorling.object=dorling.object.i)
 
 }
 
