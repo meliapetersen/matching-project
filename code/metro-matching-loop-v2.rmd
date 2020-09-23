@@ -144,8 +144,6 @@ build_matchit_metros <- function( fo, df )
 
 }
 
-mo <- build_matchit_metros( fo, df )
-
 ```
 
 ```{r}
@@ -265,8 +263,8 @@ for( i in cbsa.list )
    dorling.object.i <- get_dorling( cbsa=i, dorlings.catalog )
    dorling.object.i <- add_treatment( df.treatment, dorling.object.i )
    rodeo.data.i <- dorling.object.i@data
-   fo <- as.formula( "treatment ~ hinc12" )
-   matchit.model <- build_matchit_metros( fo=fo, rodeo.df=rodeo.data.i )
+   fo <- as.formula( "treatment ~ own00" )
+   matchit.model <- build_matchit_metros( fo=fo, df=rodeo.data.i)
    build_colored_map( matchit.object=matchit.model )
 
 }
