@@ -80,8 +80,6 @@ dorling.object <- get_dorling( cbsa=metro.cbsa )
 df.treatment <- read.csv("rodeod-treatment-data.csv")
 # df.census <- dorling.object@data
 
-do.original <- dorling.object
-dorling.object <- do.original
 
 
 add_treatment <- function( df.treatment, dorling.object )
@@ -130,6 +128,9 @@ df <- as.data.frame( dorling.object )
 
 build_matchit_metros <- function( fo, df )
 {
+   
+   row.names(df) <- df$GEOID
+   
    matchit.object <- NULL
 
    # find matches in dataframe based on Household income, college education, and whiteness 
@@ -148,8 +149,7 @@ mo <- build_matchit_metros( fo, df )
 ```
 
 ```{r}
-
-matchit.object <- build_matchit_metros( dorling.object ) 
+matchit.object <- build_matchit_metros( fo, df ) 
 ```
 
 
@@ -161,7 +161,7 @@ matchit.object <- build_matchit_metros( dorling.object )
 # match matrix is the length of the original treated groups
 # IDs are rows of the original dataset
 
-build_colored_map <- function( matchit.object )
+build_colored_map <- function( matchit.object, dorling.object )
 {
 
   matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
@@ -173,7 +173,8 @@ build_colored_map <- function( matchit.object )
   id.treated.matched <- matches$treatment.group.id[!these.na]
   id.treated.unmatched <- matches$treatment.group.id[these.na]
   id.control.matched <- na.omit(matches$control.group.id)
-  id.control.unmatched <- rodeo.metro.i$id2 [ !(rodeo.metro.i$id2 %in% id.all.treated | rodeo.metro.i$id2 %in% id.control.matched)]
+  id.control.unmatched <- dorling.object$GEOID [ !( dorling.object$GEOID %in% id.all.treated | 
+                                                    dorling.object$GEOID %in% id.control.matched ) ]
 
 # df.x <- data.frame(Fips = id.treated.matched, group = "treated", matched = TRUE)
 # df.x
@@ -206,15 +207,30 @@ control.matched <- na.omit(id.control.matched) %>% as.numeric
 treated.unmatched <- na.omit(id.treated.unmatched)  %>% as.numeric
 control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
 
+
+
+
+status <- rep( "control.unmatched", nrow( dorling.object ) )
+status[ dorling.object$GEOID %in% control.matched ] <- "control.matched"
+status[ dorling.object$GEOID %in% treated.matched ] <- "treatment.matched"
+status[ dorling.object$GEOID %in% treated.unmatched ] <- "treatment.unmatched"
+dorling.object$status <- status
+
+
+
 ### Create color vectors based on matches
 
-color.vector <- rep( "gray", nrow(rodeo.metro.i) )
-color.vector[ rodeo.metro.i$id2 %in% control.matched ] <- "blue"
-color.vector[ rodeo.metro.i$id2 %in% treated.matched ] <- "darkred"
-color.vector[ rodeo.metro.i$id2 %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
+color.vector <- rep( "gray", nrow( dorling.object ) )
+color.vector[ dorling.object$GEOID %in% control.matched ] <- "blue"
+color.vector[ dorling.object$GEOID %in% treated.matched ] <- "darkred"
+color.vector[ dorling.object$GEOID %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
 
-border.color <- rep( "gray40", nrow(rodeo.metro.i) )
-border.color [ rodeo.metro.i$id2 %in% treated.unmatched ] <- "darkred"
+border.color <- rep( "gray40", nrow(dorling.object) )
+border.color [ dorling.object$GEOID %in% treated.unmatched ] <- "darkred"
+
+
+# dorling.object$matched.polygons <- color.vector
+# plot(dorling.object, col=dorling.object$matched.polygons, border=border.color)
 
 lat <- rnorm(1000)
 quantile( lat, c( 0.25, 0.75 ) )
@@ -231,7 +247,7 @@ plot(dorling.object, col= color.vector, border=border.color)
 ```
 
 ```{r}
-colored.map <- build_colored_map()
+colored.map <- build_colored_map( matchit.object, dorling.object )
 ```
 
 ## Create loop for all CBSAs 
