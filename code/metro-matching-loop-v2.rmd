@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message=F, warning=F )
+knitr::opts_chunk$set(echo = TRUE, message=F, warning=F, fig.width=10 )
 ```
 
 
@@ -25,12 +25,11 @@ library( sp )
 ```
 
 
-## FIRST FUNCTION
+## STEP 01
+
+Load a catalog of URLs of dorling cartograms for each CBSA metro area in the US. 
 
 ```{r}
-
-  ### dorling function
-
 load_crosswalk <- function( )
 {
    dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
@@ -38,11 +37,19 @@ load_crosswalk <- function( )
    return( dorlings.catalog )
 }
 
+
+```
+
+
+```{r}
 dorlings.catalog <- load_crosswalk()
+head( dorlings.catalog )
+```
 
+Load a dorling cartogram for one metro area: 
 
-
-get_dorling <- function( cbsa, dorlings.catalog=NULL )
+```{r}
+get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
 {
 
    if( is.null(dorlings.catalog) ){ dorlings.catalog <- load_crosswalk() }
@@ -57,31 +64,34 @@ get_dorling <- function( cbsa, dorlings.catalog=NULL )
 
    map <- geojsonio::geojson_read( x=full.url,  what="sp" )
 
-   plot( map )
+   if( mapit ){ plot( map ) }
 
    return( map )
    
 }
-
-  
-metro.cbsa <- 10580
-
-dorling.object <- get_dorling( cbsa=metro.cbsa )
-
-
 ```
 
-## SECOND FUNCTION
+Test the function with New Orleans data: 
 
 ```{r}
+new.orleans.cbsa.code <- 10580
+new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
+```
 
-### Rodeo data function 
 
+## STEP 02
+
+Load the treatment data: 
+
+```{r}
 df.treatment <- read.csv("rodeod-treatment-data.csv")
-# df.census <- dorling.object@data
+head(df.treatment)
+```
 
 
+Add the treatment data to the dorling spatial object: 
 
+```{r}
 add_treatment <- function( df.treatment, dorling.object )
 {
 
@@ -102,196 +112,259 @@ add_treatment <- function( df.treatment, dorling.object )
 
   return( dorling.object )
 }
-
-dorling.object <- add_treatment( df.treatment, dorling.object ) 
-table( dorling.object$treatment, useNA="ifany" )
-  
 ```
 
 
+
+Test the function:
+
 ```{r}
-head(df.treatment)
+new.orleans <- add_treatment( df.treatment, dorling.object=new.orleans ) 
+
+# unit test - make sure data merge worked
+table( new.orleans$treatment, useNA="ifany" )
+
+# appended data 
+head(new.orleans@data)
 ```
 
 
+## STEP 03
+
+Match the "treated" census tracts (those that received federal aid) with *equivalent* untreated tracts using the matchit package.
+
+
 ```{r}
-head(dorling.object)
-
-```
-## SECOND FUNCTION
-
-### matchit function 
-```{r}
-
-fo <- as.formula( "treatment ~ own00" )
-df <- as.data.frame( dorling.object )
-
-build_matchit_metros <- function( fo, df )
+match_tracts <- function( fo, dorling.object )
 {
+   # extract data frame from sp object
+   # rename rows using tract IDs
    
+   df <- as.data.frame( dorling.object )
    row.names(df) <- df$GEOID
+   
+   # convert string to formula object
+   fo <- as.formula( fo )
    
    matchit.object <- NULL
 
    # find matches in dataframe based on Household income, college education, and whiteness 
-   try(   
+   try( 
+      invisible({ capture.output({ 
+         
       matchit.object <- matchit( fo, 
                         method="genetic", discard="both", reestimate=TRUE,
                         replace=FALSE, caliper=.25, data = df )
+      })  })
    )
 
    return( matchit.object )
 
 }
-
 ```
 
+Test the function: 
+
 ```{r}
-matchit.object <- build_matchit_metros( fo, df ) 
+# define the matching function formula 
+fo <- as.formula( "treatment ~ own00" )
+
+new.orleans.matches <- 
+   match_tracts( fo, new.orleans ) 
+
+summary( new.orleans.matches )
 ```
 
 
-## THIRD FUNCTION
+## STEP 04
 
-### Build dataframe vectors function
+### Assign tracts to groups
+
+Treated or untreated tracts by
+Matched or unmatched tracts 
 
 ```{r}
-# match matrix is the length of the original treated groups
-# IDs are rows of the original dataset
-
-build_color_vectors <-  function( matchit.object, dorling.object )
-
+assign_groups <-  function( matchit.object, dorling.object )
 {
 
-  if( is.null(matchit.object) )
-  { plot( 0,0, main="No counterfactual for the treatment available" ) }
-   
-}
-
-  if( ! is.null(matchit.object) )  
-   
-   {
-
-   
-  matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
-                       control.group.id=matchit.object$match.matrix )
-
-  these.na <- is.na(matches$control.group.id)
-
-  id.all.treated <- matches$treatment.group.id 
-  id.treated.matched <- matches$treatment.group.id[!these.na]
-  id.treated.unmatched <- matches$treatment.group.id[these.na]
-  id.control.matched <- na.omit(matches$control.group.id)
-  id.control.unmatched <- dorling.object$GEOID [ !( dorling.object$GEOID %in% id.all.treated | 
-                                                    dorling.object$GEOID %in% id.control.matched ) ]
-
-# df.x <- data.frame(Fips = id.treated.matched, group = "treated", matched = TRUE)
-# df.x
-
-# rowbind
-
-matches <- na.omit(matches)
-
-sum(is.na(matches$control.group.id))
-
-
-matchit.object$nn
-
-# all treated cases in dataset:
-length( matchit.object$match.matrix )
-
-# treated cases that were matched: 
-sum( ! is.na(matchit.object$match.matrix) )
-
-### Extract balanced dataset 
-new.dat <- match.data( matchit.object )
-dim( new.dat ) # 2 x number in matched treatment group
-
-
-### Create Treatment and Control vectors
-
-treated.matched <- na.omit(id.treated.matched) %>% as.numeric
-control.matched <- na.omit(id.control.matched) %>% as.numeric
-
-treated.unmatched <- na.omit(id.treated.unmatched)  %>% as.numeric
-control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
-
+  if( is.null( matchit.object ) )
+  { 
+     status <- rep( "control.unmatched", nrow( dorling.object ) )
+     status[ dorling.object$treatment == 1 ] <- "treatment.unmatched"
+     dorling.object$status <- status
   }
-
-```
-
-```{r}
-color.vector.object <- build_color_vectors(matchit.object, dorling.object)
-```
-
-
-```{r}
-
-build_colored_map <- function(color.vector.object, dorling.object)
    
+  if( ! is.null( matchit.object ) )  
+  {
+
+     # extract matched pairs from matchit object
+     # match matrix is the length of the original treated groups
+     # IDs are rows of the original dataset
+     
+     matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
+                            control.group.id=matchit.object$match.matrix )
+   
+     these.na <- is.na( matches$control.group.id )
+   
+     # generate four cases for tracts 
+     id.all.treated <- matches$treatment.group.id 
+     id.treated.matched <- matches$treatment.group.id[ ! these.na ]
+     id.treated.unmatched <- matches$treatment.group.id[ these.na ]
+     id.control.matched <- na.omit(matches$control.group.id)
+     id.control.unmatched <- dorling.object$GEOID [ !( dorling.object$GEOID %in% id.all.treated | 
+                                                    dorling.object$GEOID %in% id.control.matched ) ]
+   
+     ### Assign tract IDs to groups
+     
+     treated.matched <- na.omit(id.treated.matched) %>% as.numeric
+     control.matched <- na.omit(id.control.matched) %>% as.numeric
+     
+     treated.unmatched <- na.omit(id.treated.unmatched)  %>% as.numeric
+     control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
+     
+     status <- rep( "control.unmatched", nrow( dorling.object ) )
+     status[ dorling.object$GEOID %in% control.matched ] <- "control.matched"
+     status[ dorling.object$GEOID %in% treated.matched ] <- "treatment.matched"
+     status[ dorling.object$GEOID %in% treated.unmatched ] <- "treatment.unmatched"
+     dorling.object$status <- status
+      
+  }
+   
+  return( dorling.object )
+
+}
+```
+
+```{r}
+new.orleans <- 
+   assign_groups( matchit.object=new.orleans.matches, 
+                  dorling.object=new.orleans )
+
+table( new.orleans$status )
+```
+
+# STEP 05 - Map Matches 
+
+```{r}
+map_matches <- function( dorling.object, cbsa.name, zoom=TRUE, zoom.range=90 )
 {
 
-
-status <- rep( "control.unmatched", nrow( dorling.object ) )
-status[ dorling.object$GEOID %in% control.matched ] <- "control.matched"
-status[ dorling.object$GEOID %in% treated.matched ] <- "treatment.matched"
-status[ dorling.object$GEOID %in% treated.unmatched ] <- "treatment.unmatched"
-dorling.object$status <- status
-
-
-
-### Create color vectors based on matches
-
-color.vector <- rep( "gray", nrow( dorling.object ) )
-color.vector[ dorling.object$GEOID %in% control.matched ] <- "blue"
-color.vector[ dorling.object$GEOID %in% treated.matched ] <- "darkred"
-color.vector[ dorling.object$GEOID %in% treated.unmatched ] <- adjustcolor( "darkred", alpha.f = 0.4 )
-
-border.color <- rep( "gray40", nrow(dorling.object) )
-border.color [ dorling.object$GEOID %in% treated.unmatched ] <- "darkred"
-
-
-# dorling.object$matched.polygons <- color.vector
-# plot(dorling.object, col=dorling.object$matched.polygons, border=border.color)
-
-lat <- rnorm(1000)
-quantile( lat, c( 0.25, 0.75 ) )
-
-# in the plot function
-xlim=quantile( lat, c(0.25,0.75) )
-
-par(mar=c(0,0,0,0))
-
-plot(dorling.object, col= color.vector, border=border.color)
-
+   
+   if( sum( dorling.object$status == "treatment.matched" ) > 0 )
+   {
+      
+   ### Create color vectors based on matches
+   
+   color.vector <- rep( "gray80", nrow( dorling.object ) )
+   color.vector[ dorling.object$status == "control.matched" ] <- "blue"
+   color.vector[ dorling.object$status == "treatment.matched" ] <- "darkred"
+   color.vector[ dorling.object$status == "treatment.unmatched" ] <- adjustcolor( "darkred", alpha.f = 0.4 )
+   
+   border.color <- rep( "gray40", nrow(dorling.object) )
+   border.color[ dorling.object$status == "treatment.unmatched" ] <- "darkred"
+   
+   
+   # set zoom
+   
+   coords <- coordinates( dorling.object ) %>% as.data.frame()
+   
+   x.min.max <- range( coords$V1, na.rm=T )
+   y.min.max <- range( coords$V2, na.rm=T )
+   
+   if( zoom )
+   {
+     tail <- ( 100 - zoom.range ) / 200   
+     x.min.max <- quantile( coords$V1, c( 0+tail, 1-tail ) )
+     y.min.max <- quantile( coords$V2, c( 0+tail, 1-tail ) )
+   }
+   
+   par( mar=c(0,0,5,0) )
+   
+   plot( dorling.object, 
+         col=color.vector, 
+         border=border.color, 
+         xlim=x.min.max,
+         ylim=y.min.max,
+         main=toupper(cbsa.name), 
+         cex.main=1.5 )
+   }
+   
+   if( sum( dorling.object$status == "treatment.matched" ) == 0 )
+   {
+      par( mar=c(0,0,5,0) )
+      plot( dorling.object,
+            col=ifelse( dorling.object$treatment == 1, "darkred", "gray80" ),
+            main=paste0( toupper(cbsa.name), ": \nNO VALID COUNTERFACTUALS FOUND" ), 
+            cex.main=1.5 )
+            
+   }
+   
 }
 
 ```
 
 ```{r}
-colored.map <- build_colored_map( color.vector.object, dorling.object )
+map_matches( new.orleans, cbsa.name="New Orleans", zoom=TRUE, zoom.range=90 )
 ```
+
+
+
+
+# Combine Steps 
+
+```{r}
+get_matches <- function( cbsa.code, cbsa.catalog, 
+                         df.treatment, fo,
+                         zoom.range=90, return.dorling=FALSE )
+{
+   
+   cbsa.name <- cbsa.catalog$cbsaname[ cbsa.catalog$cbsa == cbsa.code ]
+   dorling.object <- get_dorling( cbsa=cbsa.code, cbsa.catalog )
+   dorling.object <- add_treatment( df.treatment, dorling.object )
+   matched.tracts <- match_tracts( fo=fo, dorling.object )
+   if( ! is.null(matched.tracts) ){ print(summary( matched.tracts )) }
+   dorling.object <- assign_groups( matched.tracts, dorling.object )
+   map_matches( dorling.object, cbsa.name, zoom=TRUE, zoom.range )
+   
+   if( return.dorling ){ return( dorling.object ) }
+   
+}
+```
+
+
+```{r, eval=F}
+fo <- as.formula( "treatment ~ own00" )
+
+akron <- 
+   get_matches( cbsa.code=10420, 
+                cbsa.catalog=dorlings.catalog,
+                df.treatment=df.treatment,
+                fo=fo,
+                return.dorling=TRUE )
+
+table( akron$status, useNA="ifany" )
+map_matches( akron, cbsa.name="AKRON, OH", zoom=FALSE )
+```
+
 
 ## Create loop for all CBSAs 
 
 ```{r}
 
-# prep data for the loop? how do we test? 
+# dorlings.catalog <- load_crosswalk()
 
-dorlings.catalog <- load_crosswalk()
+# df.treatment <- # load treatment data 
 
-cbsa.list <- unique( dorlings.catalog$cbsa )
+# matching formula 
+fo <- as.formula( "treatment ~ own00" )
+cbsa.code.list <- unique( dorlings.catalog$cbsa )
 
-for( i in cbsa.list )
+for( i in cbsa.code.list[1:5] )
 {
-   dorling.object.i <- get_dorling( cbsa=i, dorlings.catalog )
-   dorling.object.i <- add_treatment( df.treatment, dorling.object.i )
-   rodeo.data.i <- dorling.object.i@data
-   fo <- as.formula( "treatment ~ own00" )
-   matchit.model <- build_matchit_metros( fo=fo, df=rodeo.data.i)
-   vector.model <- build_color_vectors(matchit.object=matchit.model, dorling.object=dorling.object.i)
-   build_colored_map( color.vector.object=vector.model, dorling.object=dorling.object.i )
-
+  get_matches( cbsa.code=i, 
+               cbsa.catalog=dorlings.catalog, 
+               df.treatment=df.treatment, 
+               fo=fo )
 }
 
 
