@@ -3,13 +3,14 @@ title: "metro-matching-loop"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
+    theme: readable
+    df_print: paged
     highlight: tango
-    toc: true
-    self_contained: false
+    css: clean.css
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set( message=F, warning=F, fig.width=10 )
+knitr::opts_chunk$set( message=F, warning=F, fig.width=12, fig.height=12 )
 ```
 
 
@@ -153,13 +154,16 @@ match_tracts <- function( fo, dorling.object )
 
    # find matches in dataframe based on Household income, college education, and whiteness 
    try( 
+      
       invisible({ capture.output({ 
          
       matchit.object <- matchit( fo, 
                         method="genetic", discard="both", reestimate=TRUE,
                         replace=FALSE, caliper=.25, data = df )
-      })  })
-   )
+      })  }),
+      
+      
+      silent=TRUE )
 
    return( matchit.object )
 
@@ -326,9 +330,11 @@ get_matches <- function( cbsa.code, cbsa.catalog,
    dorling.object <- add_treatment( df.treatment, dorling.object )
    matched.tracts <- match_tracts( fo=fo, dorling.object )
    
+   cat( "<br><br><hr><br><br>" )
+   cat( paste0( "<center><h2>", toupper(cbsa.name), "</h2></center>") )
+   
    if( ! is.null(matched.tracts) )
    { 
-      cat( paste0( "\n\n<h2>", toupper(cbsa.name), "</h2>") )
       cat( matched.tracts$nn %>% pander() ) 
    }
    
