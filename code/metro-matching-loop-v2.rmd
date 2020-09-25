@@ -1,12 +1,15 @@
 ---
 title: "metro-matching-loop"
-author: "Jaesa Rogers"
-date: "9/14/2020"
-output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    self_contained: false
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message=F, warning=F, fig.width=10 )
+knitr::opts_chunk$set( message=F, warning=F, fig.width=10 )
 ```
 
 
@@ -19,9 +22,9 @@ knitr::opts_chunk$set(echo = TRUE, message=F, warning=F, fig.width=10 )
 library( MatchIt )
 library( here )
 library( dplyr )
-
 library( geojsonio )
 library( sp )
+library( pander )
 ```
 
 
@@ -43,7 +46,7 @@ load_crosswalk <- function( )
 
 ```{r}
 dorlings.catalog <- load_crosswalk()
-head( dorlings.catalog )
+rmarkdown::paged_table( head( dorlings.catalog ) )
 ```
 
 Load a dorling cartogram for one metro area: 
@@ -85,7 +88,7 @@ Load the treatment data:
 
 ```{r}
 df.treatment <- read.csv("rodeod-treatment-data.csv")
-head(df.treatment)
+rmarkdown::paged_table(  head(df.treatment) )
 ```
 
 
@@ -125,7 +128,7 @@ new.orleans <- add_treatment( df.treatment, dorling.object=new.orleans )
 table( new.orleans$treatment, useNA="ifany" )
 
 # appended data 
-head(new.orleans@data)
+rmarkdown::paged_table( head(new.orleans@data) )
 ```
 
 
@@ -322,7 +325,13 @@ get_matches <- function( cbsa.code, cbsa.catalog,
    dorling.object <- get_dorling( cbsa=cbsa.code, cbsa.catalog )
    dorling.object <- add_treatment( df.treatment, dorling.object )
    matched.tracts <- match_tracts( fo=fo, dorling.object )
-   if( ! is.null(matched.tracts) ){ print(summary( matched.tracts )) }
+   
+   if( ! is.null(matched.tracts) )
+   { 
+      cat( paste0( "\n\n<h2>", toupper(cbsa.name), "</h2>") )
+      cat( matched.tracts$nn %>% pander() ) 
+   }
+   
    dorling.object <- assign_groups( matched.tracts, dorling.object )
    map_matches( dorling.object, cbsa.name, zoom=TRUE, zoom.range )
    
@@ -349,7 +358,7 @@ map_matches( akron, cbsa.name="AKRON, OH", zoom=FALSE )
 
 ## Create loop for all CBSAs 
 
-```{r}
+```{r, results="asis"}
 
 # dorlings.catalog <- load_crosswalk()
 
