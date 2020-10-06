@@ -314,6 +314,15 @@ map_matches <- function( dorling.object, cbsa.name, zoom=TRUE, zoom.range=90 )
          cex.main=1.5 )
    }
    
+   
+       if( sum(dorling.object$treatment, na.rm = TRUE) < 1) 
+   {   
+     cat( "<br><br><hr><br><br>" )
+     cat( paste0( "<center><h2>","There are no treated tracts in ", toupper(cbsa.name), ".</h2></center>") )
+     cat( "<br><br><hr><br><br>" )
+     return( NULL )
+   }
+   
    if( sum( dorling.object$status == "treatment.matched" ) == 0 )
    {
       par( mar=c(0,0,5,0) )
@@ -326,13 +335,6 @@ map_matches <- function( dorling.object, cbsa.name, zoom=TRUE, zoom.range=90 )
    
    
       
-      if( sum(dorling.object$treatment <1) )
-   {   
-     cat( "<br><br><hr><br><br>" )
-     cat( paste0( "<center><h2>","There are no treated tracts in ", toupper(cbsa.name), ".</h2></center>") )
-     cat( "<br><br><hr><br><br>" )
-     return( NULL )
-   }
 }
 
 ```
@@ -383,7 +385,7 @@ get_matches <- function( cbsa.code, cbsa.catalog,
 
 
 ```{r, eval=F}
-fo <- as.formula( "treatment ~ COL00 + EMP00" )
+fo <- as.formula( "treatment ~ unemp00 + col00" )
 
 akron <- 
    get_matches( cbsa.code=10420, 
@@ -406,7 +408,7 @@ map_matches( akron, cbsa.name="AKRON, OH", zoom=FALSE )
 # df.treatment <- # load treatment data 
 
 # matching formula 
-fo <- as.formula( "treatment ~ COL00 + EMP00" )
+fo <- as.formula( "treatment ~  unemp00 + col00" )
 cbsa.code.list <- unique( dorlings.catalog$cbsa )
 
 for( i in cbsa.code.list )
@@ -424,7 +426,7 @@ for( i in cbsa.code.list )
 
 
 ```{r}
-fo <- as.formula( "treatment ~ own00" )
+fo <- as.formula( "treatment ~ unemp00 + col00" )
 cbsa.code.list <- unique( dorlings.catalog$cbsa )
 
 for( i in cbsa.code.list [193:349] )
@@ -440,7 +442,7 @@ for( i in cbsa.code.list [193:349] )
 
 ```{r}
 
-fo <- as.formula( "treatment ~ own00" )
+fo <- as.formula( "treatment ~ unemp00 + col00" )
 cbsa.code.list <- unique( dorlings.catalog$cbsa )
 
 for( i in cbsa.code.list [196:349] )
@@ -455,7 +457,7 @@ for( i in cbsa.code.list [196:349] )
 
 ```{r}
 
-fo <- as.formula( "treatment ~ own00" )
+fo <- as.formula( "treatment ~ unemp00 + col00" )
 cbsa.code.list <- unique( dorlings.catalog$cbsa )
 
 for( i in cbsa.code.list [208:349] )
@@ -469,7 +471,7 @@ for( i in cbsa.code.list [208:349] )
 
 ```{r}
 
-fo <- as.formula( "treatment ~ own00" )
+fo <- as.formula( "treatment ~ unemp00 + col00" )
 cbsa.code.list <- unique( dorlings.catalog$cbsa )
 
 for( i in cbsa.code.list [295:349] )
@@ -482,17 +484,4 @@ for( i in cbsa.code.list [295:349] )
 ```
 
 
-```{r}
-
-fo <- as.formula( "treatment ~ own00" )
-cbsa.code.list <- unique( dorlings.catalog$cbsa )
-
-for( i in cbsa.code.list [295:349] )
-{
-  get_matches( cbsa.code=i, 
-               cbsa.catalog=dorlings.catalog, 
-               df.treatment=df.treatment, 
-               fo=fo )
-}
-```
 
