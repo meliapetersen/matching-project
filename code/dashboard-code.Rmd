@@ -1,5 +1,5 @@
 ---
-title: "Matching Dashboard"
+title: "US Metro Matching Tool"
 output: 
   flexdashboard::flex_dashboard:
     source: embed
@@ -7,7 +7,12 @@ output:
 runtime: shiny
 ---
 
+
 ```{r global, include=FALSE}
+# data and libraries 
+
+##Example of what to put here below 
+
 library( flexdashboard )
 library( tidyverse )
 library( ggmap )
@@ -20,80 +25,21 @@ library( knitr )
 library( rsconnect )
 
 URL <- "https://github.com/DS4PS/Data-Science-Class/blob/master/DATA/TempeTrafficAccidents.rds?raw=true"
-dat <- readRDS(gzcon(url( URL )))
 
-dat <- na.omit(dat) # omit any rows with NAs
-dat$fatal <- dat$Totalfatalities > 0 
-dat$inj <- dat$Totalinjuries > 0 & dat$Totalfatalities == 0
-dat$nohurt <- dat$Totalfatalities + dat$Totalinjuries == 0
-
-date.vec   <- strptime( dat$DateTime, format="%m/%d/%y %H:%M" )
-dat$hour   <- format( date.vec, format="%H" ) %>% as.numeric()
-dat$month  <- format( date.vec, format="%b" )
-dat$day    <- format( date.vec, format="%a" )
-dat$day365 <- format( date.vec, format="%j" )
-dat$week   <- format( date.vec, format="%V" )
-
-dat <- 
-  dat %>% 
-  mutate( time.of.day.1 = case_when( hour >= 6 & hour <= 9 ~ "Morning Commute", 
-                                   hour >= 16 & hour <= 19 ~ "Evening Commute", 
-                                   hour >= 14 & hour <= 15 ~ "School Pickup", 
-                                   hour >= 9 & hour <= 13 ~ "Work", 
-                                   hour >= 20 & hour <= 23 ~ "Night", 
-                                   hour <= 5 & hour >= 0 ~ "Midnight to Dawn") )
-
-dat <- 
-  dat %>% 
-  mutate( time.of.day.2 = case_when( hour >= 6 & hour <= 9 ~ "Morning Commute", 
-                                   hour >= 16 & hour <= 19 ~ "Evening Commute", 
-                                   hour >= 14 & hour <= 15 ~ "School Pickup", 
-                                   hour >= 9 & hour <= 13 ~ "Work", 
-                                   hour >= 20 & hour <= 23 ~ "Night", 
-                                   hour <= 5 & hour >= 0 ~ "Midnight to Dawn") )
-
-dat$harm <- ifelse( dat$Totalinjuries > 0 | dat$Totalfatalities > 0, "Harm", "No Harm" )
-
-dat <- 
-  dat %>% 
-  mutate( d1.substance = case_when( AlcoholUse_Drv1 == "Alcohol" & 
-                                      DrugUse_Drv1 == "No Apparent Influence" ~ "Alcohol", 
-                                   AlcoholUse_Drv1 == "No Apparent Influence" & 
-                                     DrugUse_Drv1 == "Drugs" ~ "Drugs", 
-                                   AlcoholUse_Drv1 == "Alcohol" & 
-                                     DrugUse_Drv1 == "Drugs" ~ "Alcohol and Drugs", 
-                                   AlcoholUse_Drv1 == "No Apparent Influence" & 
-                                     DrugUse_Drv1 == "No Apparent Influence" ~ "No Apparent Influence"))
-
-dat <- 
-  dat %>% 
-  mutate( d2.substance = case_when( AlcoholUse_Drv2 == "Alcohol" & 
-                                      DrugUse_Drv2 == "No Apparent Influence" ~ "Alcohol", 
-                                    AlcoholUse_Drv2 == "No Apparent Influence" & 
-                                      DrugUse_Drv2 == "Drugs" ~ "Drugs", 
-                                    AlcoholUse_Drv2 == "Alcohol" & 
-                                      DrugUse_Drv2 == "Drugs" ~ "Alcohol and Drugs", 
-                                    AlcoholUse_Drv2 == "No Apparent Influence" & 
-                                      DrugUse_Drv2 == "No Apparent Influence" ~ "No Apparent Influence"))
-
-dat$age.cat <- case_when( dat$Age_Drv1 >= 0 & 
-                            dat$Age_Drv1 <= 18 ~ "Youth", 
-                          dat$Age_Drv1 >= 19 & 
-                            dat$Age_Drv1 <= 25 ~ "Young Adult", 
-                          dat$Age_Drv1 >= 26 & 
-                            dat$Age_Drv1 <= 64 ~ "Adult", 
-                          dat$Age_Drv1 >= 65 ~ "Senior")
 ```
 
 
 
-Neighborhood Matches by Census Data
+US Metro Matching Tool - NMTC Example (Start here)
 =====================================  
 
 Inputs {.sidebar}
 -------------------------------------
 
 ```{r}
+
+#Demographic checkbox  - need to change days to census variables 
+
 checkboxGroupInput("days", label = h3("Day of Week"), 
     choices = list("Monday"    = "Mon", 
                    "Tuesday"   = "Tue", 
@@ -104,23 +50,25 @@ checkboxGroupInput("days", label = h3("Day of Week"),
                    "Sunday"    = "Sun" ),
     selected = c("Fri","Sat","Sun"))
 
-sliderInput("hour", label = h3("Time of Day"), 
-            min = 0, max = 23, value = c(6, 12))
+# City dropdown menu pseudocode 
+selectInput(inputId, label, choices, selected = NULL, multiple = FALSE, selectize = TRUE)
 
-# parameters
-
+# Run button pseudocode 
+actionButton(inputId, label, icon = NULL)
 ```
 
    
 Outputs
 -------------------------------------
 
-### Neighborhood Matches by Census Data
+### Neighborhood Matches by Census Data 
 
 
 ```{r}
 
-#leaflet
+#render 5 chosen shapefiles 
+
+#below example from previous project 
 renderLeaflet({
   
   days.of.week <- input$days    # vector will all checked values
@@ -153,6 +101,192 @@ renderLeaflet({
 
 
 })
+
+
+#City dropdown menu pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$select, e.g.
+  output$value <- renderPrint({ input$select })
+
+}
+
+# Run button pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ input$action })
+
+}
+```   
+
+Program Data Upload 
+=====================================  
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+# File upload pseudocode 
+fileInput(inputId, label, multiple = FALSE, accept = NULL)
+
+# Run button pseudocode 
+actionButton(inputId, label, icon = NULL)
+
+#Head data to show merged and cleaned 
+
+```
+
+   
+Outputs
+-------------------------------------
+
+### 
+
+
+```{r}
+
+# File upload pseudocode
+function(input, output) {
+
+  # You can access the value of the widget with input$file, e.g.
+  output$value <- renderPrint({
+    str(input$file)
+  })
+
+}
+
+# Run button pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ input$action })
+
+}
+
+# data headed 
+```   
+
+Matching Analysis
+=====================================  
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+# Checkboses changed for census variables 
+checkboxGroupInput("days", label = h3("Day of Week"), 
+    choices = list("Monday"    = "Mon", 
+                   "Tuesday"   = "Tue", 
+                   "Wednesday" = "Wed", 
+                   "Thursday"  = "Thu",
+                   "Friday"    = "Fri",
+                   "Saturday"  = "Sat",
+                   "Sunday"    = "Sun" ),
+    selected = c("Fri","Sat","Sun"))
+
+
+ 
+# Run button pseudocode 
+actionButton(inputId, label, icon = NULL)
+
+# Download CSV button pseudocode 
+actionButton(inputId, label, icon = NULL)
+
+```
+
+   
+Outputs
+-------------------------------------
+
+### 
+
+
+```{r}
+
+# matched data analysis 
+
+# Run button pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ input$action })
+
+}
+
+# Download CSV button pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ input$action })
+
+}
+```   
+
+Maps Matched by Census Tract
+=====================================  
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+#dropdown for metro areas that matches were analyzed by 
+
+# City dropdown menu pseudocode 
+selectInput(inputId, label, choices, selected = NULL, multiple = FALSE, selectize = TRUE)
+
+# Run button pseudocode 
+actionButton(inputId, label, icon = NULL)
+
+##If everything is perfect, create checkbox option for census variable to create cloropleth map for comparison 
+    ## Will be radio button to decide between cloropleth map or matches map 
+    ## Also option to show maps side by side for analysis 
+
+# download shapefile "data" button pseudocode 
+actionButton(inputId, label, icon = NULL)
+
+```
+
+   
+Outputs
+-------------------------------------
+
+### 
+
+
+```{r}
+
+#City dropdown menu pseudocode 
+
+function(input, output) {
+
+  # You can access the value of the widget with input$select, e.g.
+  output$value <- renderPrint({ input$select })
+
+}
+
+# Run button pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ input$action })
+
+}
+
+# Shapefile matched map shown here 
+# (render shapefile)
+
+# downloadable html shapefile catalog
+# Run button pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ input$action })
+
+}
+
 ```   
 
 
