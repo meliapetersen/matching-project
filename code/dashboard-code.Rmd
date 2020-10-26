@@ -9,9 +9,8 @@ runtime: shiny
 
 
 ```{r global, include=FALSE}
-# data and libraries 
 
-##Example of what to put here below 
+# data and libraries for shiny widgets
 
 library( flexdashboard )
 library( tidyverse )
@@ -24,10 +23,95 @@ library( pander )
 library( knitr )
 library( rsconnect )
 
-URL <- "https://github.com/DS4PS/Data-Science-Class/blob/master/DATA/TempeTrafficAccidents.rds?raw=true"
+
+# data and libraries for matchit code
+
+library( MatchIt )
+library( here )
+library( dplyr )
+library( geojsonio )
+library( sp )
+
+
 
 ```
 
+
+```{r global, include=FALSE}
+
+# Metro-matching code
+
+
+## STEP 01
+
+#Load a catalog of URLs of dorling cartograms for each CBSA metro area in the US. 
+
+load_crosswalk <- function( )
+{
+   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
+   dorlings.catalog <- read.csv( dorlings.url )
+   return( dorlings.catalog )
+}
+
+
+#Load a dorling cartogram for one metro area: 
+
+get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
+{
+
+   if( is.null(dorlings.catalog) ){ dorlings.catalog <- load_crosswalk() }
+
+
+   file.name <- dorlings.catalog$shapefile[ dorlings.catalog$cbsa == cbsa ]
+ 
+
+   base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
+
+   full.url <- paste0( base.url, file.name )
+
+   map <- geojsonio::geojson_read( x=full.url,  what="sp" )
+
+   if( mapit ){ plot( map ) }
+
+   return( map )
+   
+}
+
+## STEP 02
+
+#Load the New Market Tax Credit treatment data: 
+
+
+df.treatment <- read.csv("rodeod-treatment-data.csv")
+rmarkdown::paged_table(  head(df.treatment) )
+
+
+
+#Add the treatment data to the dorling spatial object: 
+
+
+add_treatment <- function( df.treatment, dorling.object )
+{
+
+  # merge leftjoin dorling object and treatment data
+  dorling.object <- merge( dorling.object, df.treatment, by.x="GEOID", by.y="id2", all.x=TRUE )
+
+
+  # create treatment variable 
+  treatment <- dorling.object$treatment 
+  
+  # omit NAs
+  treatment[ is.na(treatment) ] <- 0
+  
+  #add treatment variable back into df
+  dorling.object$treatment <- treatment
+ 
+
+  return( dorling.object )
+}
+
+
+```
 
 
 US Metro Matching Tool - NMTC Example (Start here)
@@ -40,15 +124,15 @@ Inputs {.sidebar}
 
 #Demographic checkbox  - need to change days to census variables 
 
-checkboxGroupInput("days", label = h3("Day of Week"), 
-    choices = list("Monday"    = "Mon", 
-                   "Tuesday"   = "Tue", 
-                   "Wednesday" = "Wed", 
-                   "Thursday"  = "Thu",
-                   "Friday"    = "Fri",
-                   "Saturday"  = "Sat",
-                   "Sunday"    = "Sun" ),
-    selected = c("Fri","Sat","Sun"))
+checkboxGroupInput("dorling.object", label = h3("Census Demographic Variables"), 
+    choices = list("Unemployment"    = "unemp00", 
+                   "College Educated"   = "col00", 
+                   "Household Income" = "hinc00", 
+                   "Median Home Value"  = "mhmval00",
+                   "Total families"    = "family00",
+                   "Female Headed Households"  = "fhh00"),
+                   
+    selected = c("unemp00", "col00"))
 
 # City dropdown menu pseudocode 
 selectInput(inputId, label, choices, selected = NULL, multiple = FALSE, selectize = TRUE)
@@ -57,7 +141,6 @@ selectInput(inputId, label, choices, selected = NULL, multiple = FALSE, selectiz
 actionButton(inputId, label, icon = NULL)
 ```
 
-   
 Outputs
 -------------------------------------
 
@@ -65,15 +148,49 @@ Outputs
 
 
 ```{r}
+## STEP 03
+
+#Match the "treated" census tracts (those that received federal aid) with *equivalent* untreated tracts using the matchit package.
+
+
+match_tracts <- function( fo, dorling.object )
+{
+   # extract data frame from sp object
+   # rename rows using tract IDs
+   
+   df <- as.data.frame( dorling.object )
+   row.names(df) <- df$GEOID
+   
+   # convert string to formula object
+   fo <- as.formula( fo )
+   
+   matchit.object <- NULL
+
+   # find matches in dataframe based on Household income, college education, and whiteness 
+   try( 
+      
+      invisible({ capture.output({ 
+         
+      matchit.object <- matchit( fo, 
+                        method="genetic", discard="both", reestimate=TRUE,
+                        replace=FALSE, caliper=.25, data = df )
+      })  }),
+      
+      
+      silent=TRUE )
+
+   return( matchit.object )
+
+}
+
 
 #render 5 chosen shapefiles 
 
 #below example from previous project 
 renderLeaflet({
   
-  days.of.week <- input$days    # vector will all checked values
-  start.time <- input$hour[1]   # sliderInput lower value
-  end.time  <-  input$hour[2] 
+  census.variables <- input$    # vector will all checked values
+
   
   d2 <-
     dat %>%
