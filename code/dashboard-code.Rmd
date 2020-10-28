@@ -110,44 +110,6 @@ add_treatment <- function( df.treatment, dorling.object )
   return( dorling.object )
 }
 
-
-```
-
-
-US Metro Matching Tool - NMTC Example (Start here)
-=====================================  
-
-Inputs {.sidebar}
--------------------------------------
-
-```{r}
-
-#Demographic checkbox  - need to change days to census variables 
-
-checkboxGroupInput("dorling.object", label = h3("Census Demographic Variables"), 
-    choices = list("Unemployment"    = "unemp00", 
-                   "College Educated"   = "col00", 
-                   "Household Income" = "hinc00", 
-                   "Median Home Value"  = "mhmval00",
-                   "Total families"    = "family00",
-                   "Female Headed Households"  = "fhh00"),
-                   
-    selected = c("unemp00", "col00"))
-
-# City dropdown menu pseudocode 
-selectInput(inputId, label, choices, selected = NULL, multiple = FALSE, selectize = TRUE)
-
-# Run button pseudocode 
-actionButton(inputId, label, icon = NULL)
-```
-
-Outputs
--------------------------------------
-
-### Neighborhood Matches by Census Data 
-
-
-```{r}
 ## STEP 03
 
 #Match the "treated" census tracts (those that received federal aid) with *equivalent* untreated tracts using the matchit package.
@@ -183,58 +145,81 @@ match_tracts <- function( fo, dorling.object )
 
 }
 
+```
 
-#render 5 chosen shapefiles 
 
-#below example from previous project 
-renderLeaflet({
-  
-  census.variables <- input$    # vector will all checked values
+```{r global, include=FALSE}
 
-  
-  d2 <-
-    dat %>%
-    filter( day %in% input$days, 
-            hour >= start.time & hour <= end.time )
-  
-  d2$col.vec <- ifelse( d2$nohurt, "gray20", ifelse(d2$inj, "steelblue", "darkorange") )              
+png( )
+
+  tmap_mode("plot")
+  tmap_style("cobalt")
+  tm_shape( phoenix-mesa-scottsdale-az-dorling-v1.geojson, bbox=bb ) + 
+  tm_polygons( col="cluster", palette="Accent"  )
+
+
+dev.off()
+
+
+city.dorling <- get_dorling( input$city.name )
+
+
+
+
+#city.dorling <- reactive{{
+
+#get_dorling( input$city.name )
+
+#}}
+```
+
+
+
+US Metro Matching Tool - NMTC Example (Start here)
+=====================================  
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+# Radio button to choose city
+
+fluidPage(
     
-  point.size <- d2$Totalinjuries + d2$Totalfatalities
-
-  crash.details <- paste0( "Time: ", d2$DateTime, "<br>",
-                     "Total Fatalities: ", d2$Totalfatalities, "<br>",
-                     "Total Injuries: ", d2$Totalinjuries, "<br>",
-                     "Collision type: ", d2$Collisionmanner)
+  # Copy the line below to make a set of radio buttons
+  radioButtons("radio", label = h3("Radio buttons"),
+    choices = list("Phoenix, AZ" = 38060, "Boulder, CO" = 14500, "New Orleans, LA" = 35380, "Reno, NV" = 39900, "New York, NY" = 35644 ), 
+    selected = 38060),
   
-  tempe <- leaflet( ) %>% 
-              addProviderTiles( "CartoDB.Positron" )  %>%
-              setView( lng=-111.9278, lat=33.39951, zoom=13 )
+  hr(),
+  fluidRow(column(3, verbatimTextOutput("value")))
   
-  
-  addCircles( tempe, lng=d2$Longitude, lat=d2$Latitude,
-              fillColor=d2$col.vec, fillOpacity=0.5, 
-              stroke=F, radius=50*(1+0.33*point.size),
-              popup=crash.details )
+)
+
+```
+
+Outputs
+-------------------------------------
+
+### Neighborhood Matches by Census Data 
 
 
-})
+```{r}
 
 
-#City dropdown menu pseudocode 
-function(input, output) {
 
-  # You can access the value of the widget with input$select, e.g.
-  output$value <- renderPrint({ input$select })
+
+
+function(input, tmap_mode) {
+
+  # You can access the values of the widget (as a vector)
+  # with input$radio, e.g.
+  output$value <- renderPrint({ input$radio })
 
 }
 
-# Run button pseudocode 
-function(input, output) {
 
-  # You can access the value of the widget with input$action, e.g.
-  output$value <- renderPrint({ input$action })
-
-}
 ```   
 
 Program Data Upload 
@@ -293,16 +278,17 @@ Inputs {.sidebar}
 
 ```{r}
 
-# Checkboses changed for census variables 
-checkboxGroupInput("days", label = h3("Day of Week"), 
-    choices = list("Monday"    = "Mon", 
-                   "Tuesday"   = "Tue", 
-                   "Wednesday" = "Wed", 
-                   "Thursday"  = "Thu",
-                   "Friday"    = "Fri",
-                   "Saturday"  = "Sat",
-                   "Sunday"    = "Sun" ),
-    selected = c("Fri","Sat","Sun"))
+#Checkbox for Demographic Variables
+
+checkboxGroupInput("demographicCheckBox", label = h3("Census Demographic Variables"), 
+    choices = list("Unemployment"    = "unemp00", 
+                   "College Educated"   = "col00", 
+                   "Household Income" = "hinc00", 
+                   "Median Home Value"  = "mhmval00",
+                   "Total families"    = "family00",
+                   "Female Headed Households"  = "fhh00"),
+                   
+    selected = c("unemp00", "col00"))
 
 
  
