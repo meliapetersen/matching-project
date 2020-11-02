@@ -148,29 +148,11 @@ match_tracts <- function( fo, dorling.object )
 ```
 
 
-```{r global, include=FALSE}
+```{r}
+library (png)
 
-png( )
-
-  tmap_mode("plot")
-  tmap_style("cobalt")
-  tm_shape( phoenix-mesa-scottsdale-az-dorling-v1.geojson, bbox=bb ) + 
-  tm_polygons( col="cluster", palette="Accent"  )
-
-
-dev.off()
-
-
-city.dorling <- get_dorling( input$city.name )
-
-
-
-
-#city.dorling <- reactive{{
-
-#get_dorling( input$city.name )
-
-#}}
+new.york.png <- readPNG ("NewYork.png.png")
+  
 ```
 
 
@@ -189,8 +171,8 @@ fluidPage(
     
   # Copy the line below to make a set of radio buttons
   radioButtons("radio", label = h3("Radio buttons"),
-    choices = list("Phoenix, AZ" = 38060, "Boulder, CO" = 14500, "New Orleans, LA" = 35380, "Reno, NV" = 39900, "New York, NY" = 35644 ), 
-    selected = 38060),
+    choices = list("Phoenix, AZ" = new.orleans.png, "Boulder, CO" = 14500, "New Orleans, LA" = 35380, "Reno, NV" = 39900, "New York, NY" = new.york.png ), 
+    selected = "New York, NY"),
   
   hr(),
   fluidRow(column(3, verbatimTextOutput("value")))
@@ -211,11 +193,11 @@ Outputs
 
 
 
-function(input, tmap_mode) {
+function(input, output) {
 
   # You can access the values of the widget (as a vector)
   # with input$radio, e.g.
-  output$value <- renderPrint({ input$radio })
+  output$value <- renderImage({ input$radio })
 
 }
 
