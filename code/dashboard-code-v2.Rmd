@@ -161,7 +161,7 @@ Inputs {.sidebar}
 # Radio button to choose city
 
   radioButtons("radio", label = h3("Cities"),
-    choices = list("Phoenix, AZ" = 4 , "Boulder, CO" = 14500, "New Orleans, LA" = "new.orleans.png", "Reno, NV" = 39900, "New York, NY" = "new-york.png" ), 
+    choices = list("Phoenix, AZ" = "phoenix.png" , "Boulder, CO" = "boulder.png", "New Orleans, LA" = "new.orleans.png", "Reno, NV" = "reno.png", "New York, NY" = "new-york.png" ), 
     selected = "New York, NY")
 
 
