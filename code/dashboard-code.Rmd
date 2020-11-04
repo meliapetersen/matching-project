@@ -23,7 +23,6 @@ library( pander )
 library( knitr )
 library( rsconnect )
 
-
 # data and libraries for matchit code
 
 library( MatchIt )
@@ -33,19 +32,10 @@ library( geojsonio )
 library( sp )
 
 
-
 ```
 
-
 ```{r global, include=FALSE}
-
-# Metro-matching code
-
-
-## STEP 01
-
-#Load a catalog of URLs of dorling cartograms for each CBSA metro area in the US. 
-
+#load datasets 
 load_crosswalk <- function( )
 {
    dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
@@ -53,8 +43,16 @@ load_crosswalk <- function( )
    return( dorlings.catalog )
 }
 
+dorlings.catalog <- load_crosswalk()
 
-#Load a dorling cartogram for one metro area: 
+```
+
+
+```{r global, include=FALSE}
+
+##Create matching function 
+
+  #Load a dorling cartogram for one metro area: 
 
 get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
 {
@@ -77,18 +75,18 @@ get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
    
 }
 
-## STEP 02
 
 #Load the New Market Tax Credit treatment data: 
 
-
 df.treatment <- read.csv("rodeod-treatment-data.csv")
-rmarkdown::paged_table(  head(df.treatment) )
 
+# Test the function with New Orleans data: 
+# 
+# new.orleans.cbsa.code <- 10580
+# new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
 
 
 #Add the treatment data to the dorling spatial object: 
-
 
 add_treatment <- function( df.treatment, dorling.object )
 {
@@ -110,10 +108,7 @@ add_treatment <- function( df.treatment, dorling.object )
   return( dorling.object )
 }
 
-## STEP 03
-
 #Match the "treated" census tracts (those that received federal aid) with *equivalent* untreated tracts using the matchit package.
-
 
 match_tracts <- function( fo, dorling.object )
 {
@@ -145,9 +140,193 @@ match_tracts <- function( fo, dorling.object )
 
 }
 
+# define the matching function formula 
+# fo <- as.formula( "treatment ~ COL00 + EMP00" )
+# 
+# new.orleans.matches <- 
+#    match_tracts( fo, new.orleans ) 
+# 
+# summary( new.orleans.matches )
+
+assign_groups <-  function( matchit.object, dorling.object )
+{
+
+  if( is.null( matchit.object ) )
+  { 
+     status <- rep( "control.unmatched", nrow( dorling.object ) )
+     status[ dorling.object$treatment == 1 ] <- "treatment.unmatched"
+     dorling.object$status <- status
+  }
+   
+  if( ! is.null( matchit.object ) )  
+  {
+
+     # extract matched pairs from matchit object
+     # match matrix is the length of the original treated groups
+     # IDs are rows of the original dataset
+     
+     matches <- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
+                            control.group.id=matchit.object$match.matrix )
+   
+     these.na <- is.na( matches$control.group.id )
+   
+     # generate four cases for tracts 
+     id.all.treated <- matches$treatment.group.id 
+     id.treated.matched <- matches$treatment.group.id[ ! these.na ]
+     id.treated.unmatched <- matches$treatment.group.id[ these.na ]
+     id.control.matched <- na.omit(matches$control.group.id)
+     id.control.unmatched <- dorling.object$GEOID [ !( dorling.object$GEOID %in% id.all.treated | 
+                                                    dorling.object$GEOID %in% id.control.matched ) ]
+   
+     ### Assign tract IDs to groups
+     
+     treated.matched <- na.omit(id.treated.matched) %>% as.numeric
+     control.matched <- na.omit(id.control.matched) %>% as.numeric
+     
+     treated.unmatched <- na.omit(id.treated.unmatched)  %>% as.numeric
+     control.unmatched <- na.omit(id.control.unmatched)  %>% as.numeric
+     
+     status <- rep( "control.unmatched", nrow( dorling.object ) )
+     status[ dorling.object$GEOID %in% control.matched ] <- "control.matched"
+     status[ dorling.object$GEOID %in% treated.matched ] <- "treatment.matched"
+     status[ dorling.object$GEOID %in% treated.unmatched ] <- "treatment.unmatched"
+     dorling.object$status <- status
+      
+  }
+   
+  return( dorling.object )
+
+}
+
+map_matches <- function( dorling.object, cbsa.name, zoom=TRUE, zoom.range=90 )
+{
+
+   
+   if( sum( dorling.object$status == "treatment.matched" ) > 0 )
+   {
+      
+   ### Create color vectors based on matches
+   
+   color.vector <- rep( "gray80", nrow( dorling.object ) )
+   color.vector[ dorling.object$status == "control.matched" ] <- "blue"
+   color.vector[ dorling.object$status == "treatment.matched" ] <- "darkred"
+   color.vector[ dorling.object$status == "treatment.unmatched" ] <- adjustcolor( "darkred", alpha.f = 0.4 )
+   
+   border.color <- rep( "gray40", nrow(dorling.object) )
+   border.color[ dorling.object$status == "treatment.unmatched" ] <- "darkred"
+   
+   
+   # set zoom
+   
+   coords <- coordinates( dorling.object ) %>% as.data.frame()
+   
+   x.min.max <- range( coords$V1, na.rm=T )
+   y.min.max <- range( coords$V2, na.rm=T )
+   
+   if( zoom )
+   {
+     tail <- ( 100 - zoom.range ) / 200   
+     x.min.max <- quantile( coords$V1, c( 0+tail, 1-tail ) )
+     y.min.max <- quantile( coords$V2, c( 0+tail, 1-tail ) )
+   }
+   
+   par( mar=c(0,0,5,0) )
+   
+   plot( dorling.object, 
+         col=color.vector, 
+         border=border.color, 
+         xlim=x.min.max,
+         ylim=y.min.max,
+         main=toupper(cbsa.name), 
+         cex.main=1.5 )
+   }
+   
+   
+       if( sum(dorling.object$treatment, na.rm = TRUE) < 1) 
+   {   
+     cat( "<br><br><hr><br><br>" )
+     cat( paste0( "<center><h2>","There are no treated tracts in ", toupper(cbsa.name), ".</h2></center>") )
+     cat( "<br><br><hr><br><br>" )
+     return( NULL )
+   }
+   
+   if( sum( dorling.object$status == "treatment.matched" ) == 0 )
+   {
+      par( mar=c(0,0,5,0) )
+      plot( dorling.object,
+            col=ifelse( dorling.object$treatment == 1, "darkred", "gray80" ),
+            main=paste0( toupper(cbsa.name), ": \nNO VALID COUNTERFACTUALS FOUND" ), 
+            cex.main=1.5 )
+            
+   }
+   
+   
+      
+}
+
+get_matches <- function( cbsa.code, cbsa.catalog, 
+                         df.treatment, fo,
+                         zoom.range=90, return.dorling=FALSE )
+{
+   
+   cbsa.name <- cbsa.catalog$cbsaname[ cbsa.catalog$cbsa == cbsa.code ]
+   dorling.object <- get_dorling( cbsa=cbsa.code, cbsa.catalog )
+   dorling.object <- add_treatment( df.treatment, dorling.object )
+   matched.tracts <- match_tracts( fo=fo, dorling.object )
+   
+   cat( "<br><br><hr><br><br>" )
+   cat( paste0( "<center><h2>", toupper(cbsa.name), "</h2></center>") )
+   
+   if( ! is.null(matched.tracts) )
+   { 
+      cat( matched.tracts$nn %>% pander() ) 
+   }
+
+   
+   dorling.object <- assign_groups( matched.tracts, dorling.object )
+   map_matches( dorling.object, cbsa.name, zoom=TRUE, zoom.range )
+   
+   if( return.dorling ){ return( dorling.object ) }
+   
+}
 ```
 
 
+<<<<<<< HEAD
+=======
+```{r global, include=FALSE, results="asis"}
+
+## Create loop for all CBSAs 
+
+# dorlings.catalog <- load_crosswalk()
+# df.treatment <- # load treatment data 
+
+# matching formula
+
+# fo <- as.formula( "treatment ~  unemp00 + col00" )
+# cbsa.code.list <- unique( dorlings.catalog$cbsa )
+# 
+# for( i in cbsa.code.list )
+# {
+#   get_matches( cbsa.code=i, 
+#                cbsa.catalog=dorlings.catalog, 
+#                df.treatment=df.treatment, 
+#                fo=fo )
+# }
+
+
+```
+
+```{r global, include=FALSE}
+library (png)
+
+new.york.png <- readPNG ("NewYork.png.png")
+
+new.orleans.png <- readPNG ("NewOrleans.png.png")
+  
+```
+
+>>>>>>> b76441e96663453b2a17a732d44c0d01551363df
 
 
 US Metro Matching Tool - NMTC Example (Start here)
@@ -177,10 +356,20 @@ Outputs
 ```{r, echo=FALSE, fig.cap="A caption", out.width = '100%'}
 #knitr::include_graphics( input$radio )
 
+<<<<<<< HEAD
 
  renderImage({ knitr::include_graphics( "new-york.png" ) })
 
 
+=======
+function(input, output) {
+
+  # You can access the values of the widget (as a vector)
+  # with input$radio, e.g.
+  output$value <- renderImage({ input$radio })
+
+}
+>>>>>>> b76441e96663453b2a17a732d44c0d01551363df
 
 
 ```   
@@ -232,6 +421,7 @@ function(input, output) {
 
 # data headed 
 ```   
+
 
 Matching Analysis
 =====================================  
@@ -290,6 +480,7 @@ function(input, output) {
 
 }
 ```   
+
 
 Maps Matched by Census Tract
 =====================================  
