@@ -43,6 +43,7 @@ radioButtons( "demo.image",
                               "New York, NY" = "new-york.png" ), 
               selected = "new-york.png" )
 
+
 ```
 
 Outputs
@@ -101,3 +102,164 @@ renderImage({
 
 ```
 
+
+
+```{r, eval=F}
+
+#Load cached NMTC data
+
+## STEP 01
+
+#Load a catalog of URLs of dorling cartograms for each CBSA metro area in the US. 
+
+load_crosswalk <- function( )
+{
+   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
+   dorlings.catalog <- read.csv( dorlings.url )
+   return( dorlings.catalog )
+}
+
+
+
+dorlings.catalog <- load_crosswalk()
+
+
+# Load a dorling cartogram for one metro area: 
+
+get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
+{
+
+   if( is.null(dorlings.catalog) ){ dorlings.catalog <- load_crosswalk() }
+
+
+   file.name <- dorlings.catalog$shapefile[ dorlings.catalog$cbsa == cbsa ]
+ 
+
+   base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
+
+   full.url <- paste0( base.url, file.name )
+
+   map <- geojsonio::geojson_read( x=full.url,  what="sp" )
+
+   if( mapit ){ plot( map ) }
+
+   return( map )
+   
+}
+
+
+# Test the function with New Orleans data: 
+
+new.orleans.cbsa.code <- 10580
+new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
+
+
+
+## STEP 02
+
+# Load the New Market Tax Credit treatment data: 
+
+
+df.treatment <- read.csv("rodeod-treatment-data.csv")
+
+
+
+
+#Add the treatment data to the dorling spatial object: 
+
+add_treatment <- function( df.treatment, dorling.object )
+{
+
+  # merge leftjoin dorling object and treatment data
+  dorling.object <- merge( dorling.object, df.treatment, by.x="GEOID", by.y="id2", all.x=TRUE )
+
+
+  # create treatment variable 
+  treatment <- dorling.object$treatment 
+  
+  # omit NAs
+  treatment[ is.na(treatment) ] <- 0
+  
+  #add treatment variable back into df
+  dorling.object$treatment <- treatment
+ 
+
+  return( dorling.object )
+}
+```
+
+
+
+
+
+
+Program Data Upload 
+=====================================  
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+# Run button (Run Default - NMTC data)
+actionButton("run.default", label = "Run Default - NMTC data")
+
+
+
+
+# File upload (User data)
+fileInput("file.upload", label = h3("Upload Program Data"))
+
+
+# Run button (User data)
+actionButton("run.user.program", label = "Run - Program Data")
+
+
+
+
+
+```
+
+   
+Outputs
+-------------------------------------
+
+### 
+
+
+```{r}
+
+
+
+# Run button pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ input$run.default })
+
+}
+
+rmarkdown::paged_table(  head(df.treatment) )
+
+#NMTC data headed
+
+
+# File upload pseudocode
+function(input, output) {
+
+  # You can access the value of the widget with input$file, e.g.
+  output$value <- renderPrint({
+    str(input$file)
+  })
+
+}
+# Run button pseudocode 
+function(input, output) {
+
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ input$action })
+
+}
+
+# User program data headed 
+```   
