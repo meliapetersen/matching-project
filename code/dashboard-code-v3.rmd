@@ -1,0 +1,103 @@
+---
+title: "US Metro Matching Tool"
+output: 
+  flexdashboard::flex_dashboard:
+    source: embed
+    smart: false
+runtime: shiny
+---
+
+
+```{r global, include=FALSE}
+
+# data and libraries for shiny widgets
+
+library( flexdashboard )
+library( tidyverse )
+library( shiny )
+library( knitr )
+library( rsconnect )
+
+```
+
+
+
+
+
+US Metro Matching Tool - NMTC Example (Start here)
+=====================================  
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+# Radio button to choose city
+
+radioButtons( "demo.image", 
+              label = h3("Cities"),
+              choices = list( "Phoenix, AZ" = "phoenix.png" , 
+                              "Boulder, CO" = "boulder.png", 
+                              "New Orleans, LA" = "new-orleans.png", 
+                              "Reno, NV" = "reno.png", 
+                              "New York, NY" = "new-york.png" ), 
+              selected = "new-york.png" )
+
+```
+
+Outputs
+-------------------------------------
+
+### Neighborhood Matches by Census Data 
+
+
+```{r, eval=F}
+# DEVELOPMENT CODE
+# TEST WIDGET INPUTS 
+renderPrint({ input$demo.image  })  
+
+get.image <- reactive({ input$demo.image })
+renderPrint({ get.image() })
+```
+
+
+
+
+```{r, eval=F}
+# static version
+renderImage({
+    list( src = "new-york.png" )
+  }, deleteFile=FALSE )
+```
+
+```{r}
+# dynamic version linked to widget
+
+get.image <- reactive({ input$demo.image })
+
+renderImage({
+    list( src = get.image() )
+  }, deleteFile=FALSE )
+```
+
+
+```{r, eval=F}
+# EXAMPLE WHEN IMAGES IN THEIR OWN FOLDER
+
+# Use an existing image, and don't delete the image after sending it
+# NOTE: Image is in the subdirectory called 'images/'
+# when input$n is 1 filename is ./images/image1.jpeg
+
+renderImage({
+  
+    # When input$n is 1, 
+    filename <- normalizePath(file.path('./images',
+                              paste('image', input$n, '.jpeg', sep='')))
+
+    # Return a list containing the filename
+    list(src = filename)
+    
+}, deleteFile = FALSE)
+
+```
+
