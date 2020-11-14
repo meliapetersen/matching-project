@@ -18,6 +18,7 @@ library( shiny )
 library( knitr )
 library( rsconnect )
 library(pander)
+library( DT )
 
 ```
 
@@ -259,7 +260,6 @@ Outputs
 
 ### 
 
-
 ```{r}
 
 # Run button pseudocode 
@@ -294,6 +294,26 @@ function(input, output) {
 
 # User program data headed 
 ```   
+Row
+-------------------------------------
+```{r}
+# will be replaced with data from chosen option, currenly using preloaded data "iris" 
+
+these.buttons <- c( 'copy', 'csv', 'pdf', 'print' )
+
+renderDataTable({
+  datatable(iris[1:100,], filter='bottom', rownames=FALSE, 
+           #options=list( pageLength=5, autoWidth=TRUE ),
+           fillContainer=TRUE, 
+           style="bootstrap",
+           class='table-condensed table-striped',
+           extensions = 'Buttons', 
+           options=list( dom='Bfrtip', 
+                         buttons=these.buttons  ) )
+})
+```
+
+
 About
 ===================================== 
 
@@ -327,11 +347,10 @@ DATA DICTIONARY
 
 
 ```{r}
-URL.dd <- "https://raw.githubusercontent.com/DS4PS/cpp-526-fall-2019/master/labs/final-project/TempeTrafficAccidentsDataDictionary.csv"
-data.dictionary <- read.csv( URL.dd, stringsAsFactors=F )
+data.dictionary <- read.csv( "data-dictionary.csv", stringsAsFactors=F )
 
-data.dictionary$description <- stringi::stri_trans_general( data.dictionary$description, "latin-ascii" )
+data.dictionary$description <- stringi::stri_trans_general( data.dictionary$Description, "latin-ascii" )
 data.dictionary %>%
-  select( column, description ) %>%
+  select( Column, Description ) %>%
   pander( )
 ```
