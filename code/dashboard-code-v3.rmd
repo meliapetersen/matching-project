@@ -302,7 +302,25 @@ Row
 these.buttons <- c( 'copy', 'csv', 'pdf', 'print' )
 
 renderDataTable({
-  datatable(iris[1:100,], filter='bottom', rownames=FALSE, 
+  datatable( iris[1:100,], filter='bottom', rownames=FALSE, 
+           #options=list( pageLength=5, autoWidth=TRUE ),
+           fillContainer=TRUE, 
+           style="bootstrap",
+           class='table-condensed table-striped',
+           extensions = 'Buttons', 
+           options=list( dom='Bfrtip', 
+                         buttons=these.buttons  ) )
+})
+```
+Row
+-------------------------------------
+```{r}
+# will be replaced with data from chosen option, currenly using preloaded data "iris" 
+
+these.buttons <- c( 'copy', 'csv', 'pdf', 'print' )
+
+renderDataTable({
+  datatable( iris[1:100,], filter='bottom', rownames=FALSE, 
            #options=list( pageLength=5, autoWidth=TRUE ),
            fillContainer=TRUE, 
            style="bootstrap",
