@@ -186,6 +186,9 @@ add_treatment <- function( df.treatment, dorling.object )
 
   return( dorling.object )
 }
+
+# nmtc.treated <- add_treatment( ) need to create the object to run through the output 
+  # will be replaced by "value" in the output widget 
 ```
 
 
@@ -205,17 +208,12 @@ Inputs {.sidebar}
 actionButton("run.default", label = "Run Default - NMTC data")
 
 
-
-
 # File upload (User data)
 fileInput("file.upload", label = h3("Upload Program Data"))
 
 
 # Run button (User data)
 actionButton("run.user.program", label = "Run - Program Data")
-
-
-
 
 
 ```
@@ -228,8 +226,6 @@ Outputs
 
 
 ```{r}
-
-
 
 # Run button pseudocode 
 function(input, output) {
@@ -249,7 +245,7 @@ function(input, output) {
 
   # You can access the value of the widget with input$file, e.g.
   output$value <- renderPrint({
-    str(input$file)
+    str(input$file.upload)
   })
 
 }
@@ -257,9 +253,10 @@ function(input, output) {
 function(input, output) {
 
   # You can access the value of the widget with input$action, e.g.
-  output$value <- renderPrint({ input$action })
+  output$value <- renderPrint({ input$run.user.program })
 
 }
 
 # User program data headed 
 ```   
+
