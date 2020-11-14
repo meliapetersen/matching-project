@@ -17,6 +17,7 @@ library( tidyverse )
 library( shiny )
 library( knitr )
 library( rsconnect )
+library(pander)
 
 ```
 
@@ -26,6 +27,7 @@ library( rsconnect )
 
 US Metro Matching Tool - NMTC Example (Start here)
 =====================================  
+
 
 Inputs {.sidebar}
 -------------------------------------
@@ -102,6 +104,34 @@ renderImage({
 
 ```
 
+Row 
+-------------------------------------
+
+### About this Dashboard
+
+These dorling examples show genetic twins for treated census tracts that received New Markets Tax Credits (NMTC) between 2000-2017, and untreated census tracts that did not receive NMTC funding.
+
+Cases are matched to identify twin untreated tracts in 2000 utilizing the census variables that measure:  
+
+- Unemployment 
+
+- College 
+
+Treated or untreated tracts by:
+
+Matched or unmatched tracts 
+
+The maps have matched data based on coloring dependent on groups:
+
+- Blue - Control group matched
+
+- Red - Treated group matched
+
+- Dark Red - Treated group unmatched
+
+- Grey - Control group unmatched 
+
+If there is no counterfactual found, the map will produce a “No Valid Counterfactual Found.” 
 
 
 ```{r, eval=F}
@@ -264,4 +294,44 @@ function(input, output) {
 
 # User program data headed 
 ```   
+About
+===================================== 
 
+
+
+Row 
+-------------------------------------
+
+### About this Dashboard
+
+This dashboard was created by Melia Petersen and Jaesa Rogers, masters students in the Program Evaluation and Data Analytics program at the Watt's College of Public Service and Community Solutions at Arizona State University. 
+
+This dashboard that has been coded in R for nonprofit workers to be able to compare the effects of programs on neighborhoods that have received the treatment versus neighborhoods that have not. This dashboard uses the data that nonprofits provide as a treatment variable and use all other census tracts in a metropolitan area that have not received treatment and code them as a control group. The treatment group is comprised of census tracts that have received either funding dollars, a program that has been implemented, or a policy applied to it, and the control group are the census tracts that have not had these programs applied to them. The purpose of this is to be able to analyze the impact (positive, negative or neutral) that a program has had on a given areas. 
+
+
+Using the MatchIT package, this dashboard runs a genetic based matching on the census tracts, finding “twins” to show the impact that a program has had by comparing it to a census tract that is statistically the same. To demonstrate functionality, this dashboard uses the New Market Tax Credit (NMTC) program to create neighborhood twins of metropolitan areas that have received NMTC dollars and compare them to neighborhoods in the same city that did not receive them. To visualize this information, dorling shapefiles have been created and show the treated, untreated, matched and unmatched tracts, demonstrating all of the data that is created through this process.
+
+
+### Dashboard Authors
+
+Melia Petersen, Melia.Petersen@asu.edu, Phoenix, AZ
+
+Jaesa Rogers, Jaesa.Rogers@asu.edu, Phoenix, AZ
+
+Client: Dr. Jesse Lecy, jlecy@asu.edu, Phoenix, AZ
+
+Row
+-------------------------------------
+
+DATA DICTIONARY
+
+
+```{r}
+URL.dd <- "https://raw.githubusercontent.com/DS4PS/cpp-526-fall-2019/master/labs/final-project/TempeTrafficAccidentsDataDictionary.csv"
+data.dictionary <- read.csv( URL.dd, stringsAsFactors=F )
+
+data.dictionary$description <- stringi::stri_trans_general( data.dictionary$description, "latin-ascii" )
+data.dictionary %>%
+  select( column, description ) %>%
+  pander( )
+```
