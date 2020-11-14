@@ -149,9 +149,6 @@ get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
 
 # Test the function with New Orleans data: 
 
-new.orleans.cbsa.code <- 10580
-new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
-
 
 
 ## STEP 02
@@ -186,15 +183,16 @@ add_treatment <- function( df.treatment, dorling.object )
   return( dorling.object )
 }
 
+new.orleans.cbsa.code <- 35380
+new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
+new.orleans <- as.data.frame(new.orleans)
 
-# new.orleans.cbsa.code <- 10580
-# new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
 # new.orleans <- add_treatment( df.treatment, dorling.object=dorlings.catalog ) 
 
 # nmtc.treated <- add_treatment( ) need to create the object to run through the output 
   # will be replaced by "value" in the output widget 
 
-nmtc.data <- add_treatment( df.treatment, dorling.object=dorlings.catalog ) 
+#nmtc.data <- add_treatment( df.treatment, dorling.object=dorlings.catalog ) 
  
 ```
 
@@ -238,11 +236,11 @@ Outputs
 function(input, output) {
 
   # You can access the value of the widget with input$action, e.g.
-  output$value <- renderPrint({ input$run.default })
+  output$new.orleans <- renderPrint({ input$run.default })
 
 }
 
-rmarkdown::paged_table(  head(df.treatment) )
+#rmarkdown::paged_table(  head(df.treatment) )
 
 #NMTC data headed
 
