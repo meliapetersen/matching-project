@@ -120,7 +120,6 @@ load_crosswalk <- function( )
 }
 
 
-
 dorlings.catalog <- load_crosswalk()
 
 
@@ -187,8 +186,16 @@ add_treatment <- function( df.treatment, dorling.object )
   return( dorling.object )
 }
 
+
+# new.orleans.cbsa.code <- 10580
+# new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
+# new.orleans <- add_treatment( df.treatment, dorling.object=dorlings.catalog ) 
+
 # nmtc.treated <- add_treatment( ) need to create the object to run through the output 
   # will be replaced by "value" in the output widget 
+
+nmtc.data <- add_treatment( df.treatment, dorling.object=dorlings.catalog ) 
+ 
 ```
 
 
