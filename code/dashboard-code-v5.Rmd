@@ -1,0 +1,261 @@
+---
+title: "US Metro Matching Tool Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    source: embed
+    smart: false
+runtime: shiny
+---
+
+
+```{r global, include=FALSE}
+
+# data and libraries for matching tool
+
+library( MatchIt )
+library( here )
+library( dplyr )
+library( geojsonio )
+library( sp )
+library( pander )
+
+
+# data and libraries for shiny widgets
+
+library( flexdashboard )
+library( tidyverse )
+library( shiny )
+library( knitr )
+library( rsconnect )
+library(pander)
+library( DT )
+
+```
+
+
+```{r, include=FALSE}
+
+
+# Load the New Market Tax Credit raw data
+
+df.raw <- read.csv("LTDB_Std_2000_fullcount.csv")
+
+
+
+# Load the New Market Tax Credit treatment data
+
+df.treatment <- read.csv("rodeod-treatment-data.csv")
+
+```
+
+
+
+Demo - Step 1 (Preview)
+=====================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+# Run buttons (Run Default - Preview and aggregate NMTC data)
+
+actionButton("run.raw", label = "Show Raw NMTC data")
+
+actionButton("run.rodeo", label = "Show Aggregated NMTC data")
+
+```
+
+
+Outputs
+-------------------------------------
+
+### 
+
+```{r}
+
+
+if (interactive()) {
+ df.nmtc.raw <- eventReactive(input$run.raw, {
+      head(df.raw)
+    })
+    
+}
+
+
+if (interactive()) {
+ df.nmtc.rodeo <- eventReactive(input$run.rodeo, {
+      head(df.treatment)
+    })
+
+  }
+
+```
+
+
+```{r}
+
+## STEP 01 of Metro matching tool
+
+# Load a catalog of URLs of dorling cartograms for each CBSA metro area in the US. 
+
+
+load_crosswalk <- function( )
+{
+   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
+   dorlings.catalog <- read.csv( dorlings.url )
+   return( dorlings.catalog )
+}
+
+dorlings.catalog <- load_crosswalk()
+
+# Load a dorling cartogram for one metro area: 
+
+
+get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
+{
+
+   if( is.null(dorlings.catalog) ){ dorlings.catalog <- load_crosswalk() }
+
+
+   file.name <- dorlings.catalog$shapefile[ dorlings.catalog$cbsa == cbsa ]
+ 
+
+   base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
+
+   full.url <- paste0( base.url, file.name )
+
+   map <- geojsonio::geojson_read( x=full.url,  what="sp" )
+
+   if( mapit ){ plot( map ) }
+
+   return( map )
+   
+}
+
+
+## STEP 02 of Metro matching tool
+
+
+
+# Add the treatment data to the dorling spatial object: 
+
+add_treatment <- function( df.treatment, dorling.object )
+{
+
+  # merge leftjoin dorling object and treatment data
+  dorling.object <- merge( dorling.object, df.treatment, by.x="GEOID", by.y="id2", all.x=TRUE )
+
+
+  # create treatment variable 
+  treatment <- dorling.object$treatment 
+  
+  # omit NAs
+  treatment[ is.na(treatment) ] <- 0
+  
+  #add treatment variable back into df
+  dorling.object$treatment <- treatment
+ 
+
+  return( dorling.object )
+}
+
+```
+
+
+
+
+
+
+Demo - Step 2 (Merge)
+=====================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+# Run button (Merge NMTC data and census data)
+
+
+actionButton("merge", label = "Merge")
+
+
+
+# Radio button to choose city
+
+radioButtons( "demo.preview", 
+              label = h3("Cities"),
+              choices = list( "Phoenix, AZ" = "38060" , 
+                              "Boulder, CO" = "14500", 
+                              "New Orleans, LA" = "35380", 
+                              "Reno, NV" = "39900", 
+                              "New York, NY" = "35644" ), 
+              selected = "38060" )
+
+
+```
+
+
+Outputs
+-------------------------------------
+
+### 
+
+
+
+
+```{r, eval=F}
+# DEVELOPMENT CODE
+# TEST WIDGET INPUTS 
+renderPrint({ input$demo.preview  })  
+
+get.preview <- reactive({ input$demo.preview })
+renderPrint({ get.preview() })
+```
+
+
+
+
+```{r, eval=F}
+# static version
+renderPrint({
+    list( src = "38060" )
+  }, deleteFile=FALSE )
+```
+
+```{r}
+
+
+# Preview existing treatment data
+
+rmarkdown::paged_table(  head(df.treatment) )
+
+
+
+
+# Preview merged data of selected city
+
+city.selected <- add_treatment( df.treatment, dorling.object$GEOID = input$demo.preview ) 
+
+# unit test - make sure data merge worked
+table( city.selected$treatment, useNA="ifany" )
+
+# appended data 
+rmarkdown::paged_table( head(city.selected@data) )
+
+
+# dynamic version linked to widget
+
+get.preview  <- reactive({ input$demo.preview })
+
+renderPrint({
+    list( src = get.preview () )
+  }, deleteFile=FALSE )
+
+
+```
+
+
+
