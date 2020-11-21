@@ -326,3 +326,44 @@ The maps have matched data based on coloring dependent on groups:
 - Grey - Control group unmatched 
 
 If there is no counterfactual found, the map will produce a “No Valid Counterfactual Found.” 
+
+About
+===================================== 
+
+
+
+Row 
+-------------------------------------
+
+### About this Dashboard
+
+This dashboard was created by Melia Petersen and Jaesa Rogers, masters students in the Program Evaluation and Data Analytics program at the Watt's College of Public Service and Community Solutions at Arizona State University. 
+
+This dashboard that has been coded in R for nonprofit workers to be able to compare the effects of programs on neighborhoods that have received the treatment versus neighborhoods that have not. This dashboard uses the data that nonprofits provide as a treatment variable and use all other census tracts in a metropolitan area that have not received treatment and code them as a control group. The treatment group is comprised of census tracts that have received either funding dollars, a program that has been implemented, or a policy applied to it, and the control group are the census tracts that have not had these programs applied to them. The purpose of this is to be able to analyze the impact (positive, negative or neutral) that a program has had on a given areas. 
+
+
+Using the MatchIT package, this dashboard runs a genetic based matching on the census tracts, finding “twins” to show the impact that a program has had by comparing it to a census tract that is statistically the same. To demonstrate functionality, this dashboard uses the New Market Tax Credit (NMTC) program to create neighborhood twins of metropolitan areas that have received NMTC dollars and compare them to neighborhoods in the same city that did not receive them. To visualize this information, dorling shapefiles have been created and show the treated, untreated, matched and unmatched tracts, demonstrating all of the data that is created through this process.
+
+
+### Dashboard Authors
+
+Melia Petersen, Melia.Petersen@asu.edu, Phoenix, AZ
+
+Jaesa Rogers, Jaesa.Rogers@asu.edu, Phoenix, AZ
+
+Client: Dr. Jesse Lecy, jlecy@asu.edu, Phoenix, AZ
+
+Row
+-------------------------------------
+
+DATA DICTIONARY
+
+
+```{r}
+data.dictionary <- read.csv( "data-dictionary.csv", stringsAsFactors=F )
+
+data.dictionary$description <- stringi::stri_trans_general( data.dictionary$Description, "latin-ascii" )
+data.dictionary %>%
+  select( Column, Description ) %>%
+  pander( )
+```
