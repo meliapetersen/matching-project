@@ -8,6 +8,7 @@ runtime: shiny
 ---
 
 
+
 ```{r global, include=FALSE}
 
 # data and libraries for matching tool
@@ -27,7 +28,7 @@ library( tidyverse )
 library( shiny )
 library( knitr )
 library( rsconnect )
-library(pander)
+library( pander )
 library( DT )
 
 ```
@@ -40,11 +41,11 @@ library( DT )
 
 df.raw <- read.csv("2019_NMTC_Data.csv")
 
-
+demo.data <- read.csv( "test-data.csv" )
 
 # Load the merged df - aggregated treatment data and census data
 
-df.merged.treatment <- read.csv("rodeod-treatment-data.csv")
+df.merged.treatment <- read.csv( "rodeod-treatment-data.csv" )
 
 ```
 
@@ -59,10 +60,43 @@ Inputs {.sidebar}
 
 ```{r}
 
-# Action button (download raw NMTC data)
+h3( HTML("<b>Application Demo</b>") )
 
-actionButton("download.nmtc", label = "Download")
+h4( "This application was designed to be used as a program evalution tool that identifies control group counterfactuals for a treatment program, using the genetic matching method in R. This dashboard will take you through the tool, step by step, using the New Market Tax Credit program as an example." )
 
+h4( HTML("Follow the instructions for the following tabs: <br><hr><br>") )
+
+h5( HTML( "<b>Tab 01</b>" ) )
+
+h5(  "Download the raw New Market Tax Credit data as a .csv, so you can follow along." )
+
+h5( HTML("<br><hr><br>") )
+
+h5( HTML( "<b>Tab 02</b>" ) )
+
+h5(  "Upload the .csv you just downloaded, and aggregate it to the census tract level." )
+
+h5( HTML("<br><hr><br>") )
+
+h5( HTML( "<b>Tab 03</b>" ) )
+
+h5(  "Merge the data aggreagted on Tab 02 with census data from the Bureau of Census." )
+
+h5( HTML("<br><hr><br>") )
+
+h5( HTML( "<b>Tab 04</b>" ) )
+
+h5(  "Run the matching function on the newly created dataframe." )
+
+h5( HTML("<br><hr><br>") )
+
+h5( HTML( "<b>Tab 05</b>" ) )
+
+h5(  "Map the matches." )
+
+h5( HTML("<br><hr><br>") )
+
+helpText("Additional information...")
 
 ```
 
@@ -74,14 +108,26 @@ Outputs
 
 ```{r}
 
+renderDataTable({
+  
+  datatable( demo.data, 
+            filter = "bottom", 
+            rownames = FALSE, 
+            fillContainer = TRUE, 
+            style = "bootstrap",
+            class = "table-condensed table-striped",
+            extensions = "Buttons", 
+            options = list( dom = "Bfrtip", 
+                            buttons = "csv" ))
 
+  })
 
 ```
 
 
 
-Demo - Step 2 (Upload and Aggregate)
-=====================================  
+Demo - Step 2 (Upload and Aggregate) {data-orientation=rows}
+===============================================================  
 
 
 Inputs {.sidebar}
@@ -89,29 +135,105 @@ Inputs {.sidebar}
 
 ```{r}
 
-# Action button (upload downloaded file, and aggregate)
+fileInput( "demodata2", label = h3("Upload Test Data"),
+           accept = c("text/csv",".csv") )
 
-actionButton("upload.nmtc", label = "Upload")
+helpText("Instructions...")
 
+h4( HTML( "Additional <b>Info</b>" ) )
+
+```
+
+
+Output Row 1
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+# when input file changes
+# then executes code 
+
+df <- eventReactive( input$demodata2, {
+        read.csv( input$demodata2$datapath )
+      })
+
+
+h3( "Raw Data from the File Upload" )
+
+renderTable({
+
+  # if (is.null( input$demodata2 ) )
+  # return(NULL)
+  
+  dat <- df()
+  head( dat )
+
+})
+
+
+```
+
+Output Row 2
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+h3( "Projects Aggregated by Census Tract" )
+
+renderTable({
+  
+  dat <- df()
+  
+  # Preview aggregated treatment data
+
+  treat.data <- 
+    dat %>% 
+    group_by( City, tractid ) %>% 
+    summarize( num.of.projects=n(), tot.proj.spending=sum( ProjectCost, na.rm=TRUE ) ) %>% 
+    arrange( City )
+
+  td2 <<- treat.data
+  
+  head( treat.data, 15 )
+  
+})
+```
+
+
+
+
+Scope Demo {data-orientation=rows}
+===============================================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
 
 
 ```
 
 
-Outputs
+Output Row 1
 -------------------------------------
 
 ### 
 
 
-```{r}
+```{r, eval=T}
 
+h3( "Scope Demo - Must Recreate Steps" )
 
-# Preview uploaded NMTC data
-
-# Preview aggregated treatment data
-
-
+renderTable({
+  
+  head( treat.data, 15 )
+  
+})
 ```
 
 
@@ -135,18 +257,58 @@ actionButton("merge", label = "Merge")
 ```
 
 
-Outputs
+Output Row 1
 -------------------------------------
 
 ### 
 
+```{r, eval=T}
 
-```{r}
+
+h3( "Projects Aggregated by Census Tract" )
+
+renderTable({
+  
+  dat <- df()
+  
+  # Preview aggregated treatment data
+
+  treat.data <- 
+    dat %>% 
+    group_by( City, tractid ) %>% 
+    summarize( num.of.projects=n(), tot.proj.spending=sum( ProjectCost, na.rm=TRUE ) ) %>% 
+    arrange( City )
+
+  td2 <<- treat.data
+  
+  head( treat.data, 15 )
+  
+})
 
 
-# Preview aggregated treatment data
+```
 
-# Preview merged data - census data merged with aggregated treatment data
+Output Row 2
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+h3( "Aggregated Treatment data merged with Census data " )
+
+renderTable({
+  
+  dat <- df()
+  
+  # Preview merged data - census data merged with aggregated treatment data
+
+  
+  head( df.merged.treatment, 15 )
+  
+})
+
+
 
 ```
 
@@ -171,18 +333,51 @@ actionButton("run.matchit", label = "Run")
 ```
 
 
-Outputs
+Output Row 1
 -------------------------------------
 
 ### 
 
+```{r, eval=T}
 
-```{r}
+h3( "Aggregated Treatment data merged with Census data" )
+
+renderTable({
+  
+  dat <- df()
+  
+  # Preview merged data - census data merged with aggregated treatment data
+
+  
+  head( df.merged.treatment, 15 )
+  
+})
 
 
-# Preview existing merged data
 
-# Preview matched data of New Orleans
+```
+
+
+Output Row 2
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+## Preview matched data of New Orleans
+
+#h3( "New Orleans matched data" )
+
+#renderTable({
+  
+#  dat <- df()
+  
+#  # Preview merged data - census data merged with aggregated treatment data
+
+  
+  
+#})
 
 ```
 

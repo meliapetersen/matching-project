@@ -87,7 +87,7 @@ get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
 Test the function with New Orleans data: 
 
 ```{r}
-new.orleans.cbsa.code <- 10580
+new.orleans.cbsa.code <- 35380
 new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
 ```
 
