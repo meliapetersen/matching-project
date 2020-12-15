@@ -47,6 +47,11 @@ demo.data <- read.csv( "test-data.csv" )
 
 df.merged.treatment <- read.csv( "rodeod-treatment-data.csv" )
 
+# Load the matched df - New Orleans matchit object
+
+df3 <- read.csv("df3.csv")
+matching.results <- readRDS("matching-results.rds")
+
 ```
 
 
@@ -349,7 +354,7 @@ renderTable({
   # Preview merged data - census data merged with aggregated treatment data
 
   
-  head( df.merged.treatment, 15 )
+  head( matching.results, 15 )
   
 })
 

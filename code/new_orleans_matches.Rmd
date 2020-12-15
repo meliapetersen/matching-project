@@ -6,9 +6,10 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set( message=F, warning=F, fig.width=12, fig.height=12 )
+knitr::opts_chunk$set(echo = TRUE, message=F, warning=F )
 ```
 
+# Create New Orelans matches
 
 ```{r}
 # need this installed to use
@@ -19,150 +20,155 @@ knitr::opts_chunk$set( message=F, warning=F, fig.width=12, fig.height=12 )
 library( MatchIt )
 library( here )
 library( dplyr )
-library( geojsonio )
-library( sp )
-library( pander )
 ```
-
-
-## STEP 01
-
-Load a catalog of URLs of dorling cartograms for each CBSA metro area in the US. 
 
 ```{r}
-load_crosswalk <- function( )
-{
-   dorlings.url <- "https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv"
-   dorlings.catalog <- read.csv( dorlings.url )
-   return( dorlings.catalog )
-}
+#load LTDB data
+d1 <- readRDS(here ( "data/data-rodeo/LTDB-2000.rds" ))
+d2 <- readRDS(here ( "data/data-rodeo/LTDB-2010.rds" ))
+md <- readRDS(here ( "data/data-rodeo/LTDB-META-DATA.rds" ))
+
+#clean data 
+d1 <- dplyr::select( d1, - year )
+d2 <- dplyr::select( d2, - year )
+
+d <- merge( d1, d2, by="tractid" )
+d <- merge( d, md, by="tractid" )
+
+#load NMTC data 
+URL1 <- "https://raw.githubusercontent.com/DS4PS/cpp-528-spr-2020/master/labs/data/raw/NMTC/nmtc-sheet-01.csv"
+nmtc <- read.csv( URL1, stringsAsFactors=F )
+
+# remove anything not a number from the string
+d$id2 <- gsub( "[^0-9]", "", d$tractid )
+
+# fix IDs so they are match
+d$id2 <- as.numeric( d$id2 )
+
+# need to convert from currency to numeric
+# current format: 
+# head( nmtc$QLICI.Amount )
+# [1] "$300,000.00 "   "$1,008,750.00 " "$977,000.00 "
+
+# remove dollar sign and commas
+nmtc$amount <- gsub( "[,$]", "", nmtc$QLICI.Amount )
+
+# head(  nmtc$amount  )
+# "300000.00 "  "1008750.00 " "977000.00 "
+
+# convert characters to numeric 
+nmtc$amount <- as.numeric( nmtc$amount ) %>% round(0)
+
+# head(  nmtc$amount  )
+# [1]  300000 1008750  977000
+
+nmtc.dollars <- 
+  nmtc %>% 
+  filter( Origination.Year >= 2000 & Origination.Year <= 2010 ) %>%
+  group_by( X2010.Census.Tract ) %>% 
+  summarize( num.nmtc=n(), nmtc.total = sum( amount, na.rm=T ) )
+
+d <- merge( d, nmtc.dollars, by.x="id2", by.y="X2010.Census.Tract", all.x=T )
+
+# recode tracts that had no grants from NA to 0
+d$num.nmtc[ is.na(d$num.nmtc) ] <- 0
+d$nmtc.total[ is.na(d$nmtc.total) ] <- 0
+
+#remove rural districts 
+d <- filter( d, urban == "urban" )
 
 
 ```
 
-Load a dorling cartogram for one metro area: 
+### Create data frame for matching
 
 ```{r}
-get_dorling <- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
-{
+# create treatment variable
+treatment <- ifelse(d$nmtc.total>0, 1, 0)
 
-   if( is.null(dorlings.catalog) ){ dorlings.catalog <- load_crosswalk() }
+# add to dataframe
 
-
-   file.name <- dorlings.catalog$shapefile[ dorlings.catalog$cbsa == cbsa ]
- 
-
-   base.url <- "https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/"
-
-   full.url <- paste0( base.url, file.name )
-
-   map <- geojsonio::geojson_read( x=full.url,  what="sp" )
-
-   if( mapit ){ plot( map ) }
-
-   return( map )
-   
-}
-```
-
-Test the function with New Orleans data: 
-
-```{r}
-new.orleans.cbsa.code <- 35380
-new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
-```
-
-
-## STEP 02
-
-Load the treatment data: 
-
-```{r}
-df.treatment <- read.csv("rodeod-treatment-data.csv")
+d$treatment <- treatment
 
 ```
-
-
-Add the treatment data to the dorling spatial object: 
-
-```{r}
-add_treatment <- function( df.treatment, dorling.object )
-{
-
-  # merge leftjoin
-  dorling.object <- merge( dorling.object, df.treatment, by.x="GEOID", by.y="id2", all.x=TRUE )
-
-
-  # dorling.object <- df2
-  # x <- c( 1, NA, NA, 1, NA, NA )
-  # 
-  # omit NAs
-  treatment <- dorling.object$treatment 
-  treatment[ is.na(treatment) ] <- 0
-  dorling.object$treatment <- treatment
- 
-  # row.names(df.rodeo.metro) <- df.rodeo.metro$id2    
-  # df.rodeo.metro <- na.omit( df.rodeo.metro )
-
-  return( dorling.object )
-}
-```
-
-
-
-Test the function:
-
-```{r}
-new.orleans <- add_treatment( df.treatment, dorling.object=new.orleans ) 
-
-```
-
-
-## STEP 03
-
-Match the "treated" census tracts (those that received federal aid) with *equivalent* untreated tracts using the matchit package.
 
 
 ```{r}
-match_tracts <- function( fo, dorling.object )
-{
-   # extract data frame from sp object
-   # rename rows using tract IDs
-   
-   df <- as.data.frame( dorling.object )
-   row.names(df) <- df$GEOID
-   
-   # convert string to formula object
-   fo <- as.formula( fo )
-   
-   matchit.object <- NULL
-
-   # find matches in dataframe based on Household income, college education, and whiteness 
-   try( 
-      
-      invisible({ capture.output({ 
-         
-      matchit.object <- matchit( fo, 
-                        method="genetic", discard="both", reestimate=TRUE,
-                        replace=FALSE, caliper=.25, data = df )
-      })  }),
-      
-      
-      silent=TRUE )
-
-   return( matchit.object )
-
-}
+head(d)
 ```
 
-Test the function: 
+
 
 ```{r}
-# define the matching function formula 
-fo <- as.formula( "treatment ~ own00" )
+# match nmtc as treatment (census tracts that recieved nmtc funding vs those that didn't)
+# and seek balance on other SES characteristics 
 
-new.orleans.matches <- 
-   match_tracts( fo, new.orleans ) 
+## immigrants, high school education, home ownership, pop density (cpp 528 lab), tenure in the neighborhood
 
-summary( new.orleans.matches )
+df <- 
+  d %>% 
+  select( cbsa, id2, treatment, rent00, hinc00, pnhwht12, pnhblk12, phisp12, 
+              ppov12, punemp12,
+              hinc12, hincb12, hincw12, 
+              phs12, pcol12,
+              pown12, mhmval12 ) %>% 
+ filter( treatment %in% c( 1,0 ) ) %>% 
+ mutate( Treated = as.numeric( treatment == 1 ), 
+           Control =  as.numeric( treatment == 0 ))
+
+# drop rows with missing values
+
+nrow( df )
+df2 <- na.omit( df )
+nrow( df2 )
+
+
+# "treated" group is white
+# comparison set is minority communities
 ```
+
+
+### matchit function 
+
+### Genetic Search Method
+
+Better method, but more computationally intensive. 
+
+We use a smaller sample here, but to run with the full sample it may require running it overnight or on the supercomputing clusters. 
+
+
+**NOTE** the long output printed while the algorithm runs. Add code chunk option
+
+results 
+
+```{r, results="hide", cache=TRUE}
+# test genetic search method
+# is time-intensive so test with a sample
+
+# set seeds if you want to reproduce the 
+# exact result in the future
+set.seed( seed=1234 )
+
+# create sample set for cities with high NMTC funding: New Orleans
+df3 <- df2  %>%  filter(cbsa %in% 35380)
+
+row.names(df3) <- df3$id2    
+df3 <- na.omit( df3 )
+
+# df3$cbsa.f <- factor(df3$cbsa)      
+                 
+table( df3$treatment )
+
+
+m5 <- matchit( treatment ~ hinc12 + pcol12 + pnhwht12, 
+               method="genetic", discard="both", reestimate=TRUE, 
+               replace=FALSE, caliper=.25, data = df3 ) 
+
+```
+
+```{r}
+#saveRDS(m5, "matching-results.rds")
+
+write.csv(df3, "df3.csv")
+```
+
