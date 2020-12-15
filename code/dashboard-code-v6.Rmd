@@ -345,16 +345,11 @@ Output Row 1
 
 ```{r, eval=T}
 
-h3( "Aggregated Treatment data merged with Census data" )
+h3( "Matching Model Results" )
 
-renderTable({
+renderPrint({
   
-  dat <- df()
-  
-  # Preview merged data - census data merged with aggregated treatment data
-
-  
-  head( matching.results, 15 )
+  summary( matching.results )
   
 })
 
@@ -381,10 +376,52 @@ Output Row 2
 #  # Preview merged data - census data merged with aggregated treatment data
 
   
-  
 #})
 
+h3( "Interpretation" )
+
+h5(  "How to interpret these results?" )
+  
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Call:</b>" ) )
+
+
+# What do these arguments do? 
+# ", , reestimate = TRUE, 
+#    replace = FALSE, caliper = 0.25
+
+h5( HTML('<b>method = "genetic":</b> This argument ...') )
+
+h5( HTML('<b>discard = "both":</b> This argument ...') )
+
+
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Summary of balance for all data:</b>" ) )
+
+h5(  "Interpretation..." )
+
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Summary of balance for matched data:</b>" ) )
+
+h5(  "Interpretation..." )
+
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Percent Balance Improvement:</b>" ) )
+
+h5(  "Interpretation..." )
+
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Sample sizes:</b>" ) )
+
+h5(  "Interpretation..." )
+
 ```
+
 
 
 
@@ -535,3 +572,4 @@ data.dictionary %>%
   select( Column, Description ) %>%
   pander( )
 ```
+
