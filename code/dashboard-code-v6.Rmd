@@ -269,11 +269,15 @@ Output Row 1
 
 ```{r, eval=T}
 
+ 
 
 h3( "Projects Aggregated by Census Tract" )
 
 renderTable({
   
+  eventReactive(input$merge, {
+                
+                
   dat <- df()
   
   # Preview aggregated treatment data
@@ -287,6 +291,8 @@ renderTable({
   td2 <<- treat.data
   
   head( treat.data, 15 )
+  
+  })
   
 })
 
