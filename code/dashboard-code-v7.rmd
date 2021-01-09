@@ -274,6 +274,7 @@ Output Row 2
 
 ```{r, eval=T}
 
+
 h3( "Aggregated Treatment data merged with Census data " )
 
 renderTable({
@@ -281,20 +282,26 @@ renderTable({
   dat <- merge_button()
   
   # Preview aggregated treatment data
+treat.data <-
+    dat %>%
+    group_by( City, tractid ) %>%
+    summarize( num.of.projects=n(), tot.proj.spending=sum( ProjectCost, na.rm=TRUE ) ) %>%
+    arrange( City )
 
   merged.data <- 
+    # REPEATED CODE
     dat %>% 
     group_by( City, tractid ) %>% 
     summarize( num.of.projects=n(), tot.proj.spending=sum( ProjectCost, na.rm=TRUE ) ) %>% 
     arrange( City ) # %>% 
-    # join( ... )
+    # NEW CODE  
+     #left_join( treat.data, df.merged.treatment, by.x = "tractid", by.y = "id2", all.x = TRUE )
+     
+      merge(x = treat.data, y = df.merged.treatment, by.x = "tractid", by.y = "id2", all.x = TRUE)
   
   head( merged.data, 15 )
   
- 
 })
-
-
 
 ```
 
