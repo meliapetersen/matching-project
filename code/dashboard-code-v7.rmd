@@ -50,7 +50,7 @@ df.merged.treatment <- read.csv( "rodeod-treatment-data.csv" )
 # Load the matched df - New Orleans matchit object
 
 df3 <- read.csv("df3.csv")
-matching.results <- readRDS("matching-results.rds")
+matching.results <- readRDS("matching-results.rds") 
 
 ```
 
@@ -297,7 +297,7 @@ treat.data <-
     # NEW CODE  
      #left_join( treat.data, df.merged.treatment, by.x = "tractid", by.y = "id2", all.x = TRUE )
      
-      merge(treat.data, df.merged.treatment, by.x = "tractid", by.y = "id2", all.x = TRUE)
+    merged.data <-    merge(treat.data, df.merged.treatment, by.x = "tractid", by.y = "id2", all.x = TRUE)
       
     
   head( merged.data, 15 )
