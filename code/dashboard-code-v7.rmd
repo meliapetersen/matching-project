@@ -101,7 +101,7 @@ h5(  "Map the matches." )
 
 h5( HTML("<br><hr><br>") )
 
-helpText("Additional information...")
+#helpText("Additional information...")
 
 ```
 
@@ -143,9 +143,9 @@ Inputs {.sidebar}
 fileInput( "demodata2", label = h3("Upload Test Data"),
            accept = c("text/csv",".csv") )
 
-helpText("Instructions...")
+helpText("Instructions")
 
-h4( HTML( "Additional <b>Info</b>" ) )
+h4( HTML( "Upload the .csv you just downloaded on Tab 1, and aggregate it to the census tract level." ) )
 
 ```
 
@@ -297,8 +297,9 @@ treat.data <-
     # NEW CODE  
      #left_join( treat.data, df.merged.treatment, by.x = "tractid", by.y = "id2", all.x = TRUE )
      
-      merge(x = treat.data, y = df.merged.treatment, by.x = "tractid", by.y = "id2", all.x = TRUE)
-  
+      merge(treat.data, df.merged.treatment, by.x = "tractid", by.y = "id2", all.x = TRUE)
+      
+    
   head( merged.data, 15 )
   
 })
