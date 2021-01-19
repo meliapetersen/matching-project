@@ -73,3 +73,7 @@ df <-
 
 ```
 
+```{r}
+write.csv(df,"rodeod-treatment-data.csv", row.names = FALSE)
+```
+

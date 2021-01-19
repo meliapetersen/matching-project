@@ -37,7 +37,6 @@ Cases are matched to identify twin untreated tracts in 2000 utilizing the census
 
 We have created a data frame that combines census data and NMTC data, assigning the treatment variable to the NMTC tracts, and control to those that have not received funding under this program.
 
-
 ## STEP 01
 
 Load a catalog of URLs of dorling cartograms for each CBSA metro area in the US. 
@@ -182,7 +181,7 @@ Test the function:
 
 ```{r}
 # define the matching function formula 
-fo <- as.formula( "treatment ~ COL00 + EMP00" )
+fo <- as.formula( " treatment ~ col00 + unemp00" )
 
 new.orleans.matches <- 
    match_tracts( fo, new.orleans ) 
