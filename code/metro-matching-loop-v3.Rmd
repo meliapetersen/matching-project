@@ -181,7 +181,7 @@ Test the function:
 
 ```{r}
 # define the matching function formula 
-fo <- as.formula( " treatment ~ col00 + unemp00" )
+fo <- as.formula( " treatment ~ hinc12 + pcol12 + pnhwht12" )
 
 new.orleans.matches <- 
    match_tracts( fo, new.orleans ) 
