@@ -1,0 +1,581 @@
+---
+title: "US Metro Matching Tool Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    source: embed
+    smart: false
+runtime: shiny
+---
+
+
+
+```{r global, include=FALSE}
+
+# data and libraries for matching tool
+
+library( MatchIt )
+library( here )
+library( dplyr )
+library( geojsonio )
+library( sp )
+library( pander )
+
+
+# data and libraries for shiny widgets
+
+library( flexdashboard )
+library( tidyverse )
+library( shiny )
+library( knitr )
+library( rsconnect )
+library( pander )
+library( DT )
+
+```
+
+
+```{r, include=FALSE}
+
+
+# Load the New Market Tax Credit raw data
+
+df.raw <- read.csv("2019_NMTC_Data.csv")
+
+demo.data <- read.csv( "test-data.csv" )
+
+# Load the merged df - aggregated treatment data and census data
+
+df.merged.treatment <- read.csv( "rodeod-treatment-data.csv" )
+
+# Load the matched df - New Orleans matchit object
+
+df3 <- read.csv("df3.csv")
+matching.results <- readRDS("matching-results.rds")
+
+```
+
+
+
+Demo - Step 1 (Download)
+=====================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+h3( HTML("<b>Application Demo</b>") )
+
+h4( "This application was designed to be used as a program evalution tool that identifies control group counterfactuals for a treatment program, using the genetic matching method in R. This dashboard will take you through the tool, step by step, using the New Market Tax Credit program as an example." )
+
+h4( HTML("Follow the instructions for the following tabs: <br><hr><br>") )
+
+h5( HTML( "<b>Tab 01</b>" ) )
+
+h5(  "Download the raw New Market Tax Credit data as a .csv, so you can follow along." )
+
+h5( HTML("<br><hr><br>") )
+
+h5( HTML( "<b>Tab 02</b>" ) )
+
+h5(  "Upload the .csv you just downloaded, and aggregate it to the census tract level." )
+
+h5( HTML("<br><hr><br>") )
+
+h5( HTML( "<b>Tab 03</b>" ) )
+
+h5(  "Merge the data aggreagted on Tab 02 with census data from the Bureau of Census." )
+
+h5( HTML("<br><hr><br>") )
+
+h5( HTML( "<b>Tab 04</b>" ) )
+
+h5(  "Run the matching function on the newly created dataframe." )
+
+h5( HTML("<br><hr><br>") )
+
+h5( HTML( "<b>Tab 05</b>" ) )
+
+h5(  "Map the matches." )
+
+h5( HTML("<br><hr><br>") )
+
+helpText("Additional information...")
+
+```
+
+
+Outputs
+-------------------------------------
+
+### 
+
+```{r}
+
+renderDataTable({
+  
+  datatable( demo.data, 
+            filter = "bottom", 
+            rownames = FALSE, 
+            fillContainer = TRUE, 
+            style = "bootstrap",
+            class = "table-condensed table-striped",
+            extensions = "Buttons", 
+            options = list( dom = "Bfrtip", 
+                            buttons = "csv" ))
+
+  })
+
+```
+
+
+
+Demo - Step 2 (Upload and Aggregate) {data-orientation=rows}
+===============================================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+fileInput( "demodata2", label = h3("Upload Test Data"),
+           accept = c("text/csv",".csv") )
+
+helpText("Instructions...")
+
+h4( HTML( "Additional <b>Info</b>" ) )
+
+```
+
+
+Output Row 1
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+# when input file changes
+# then executes code 
+
+df <- eventReactive( input$demodata2, {
+        read.csv( input$demodata2$datapath )
+      })
+
+
+h3( "Raw Data from the File Upload" )
+
+renderTable({
+
+  # if (is.null( input$demodata2 ) )
+  # return(NULL)
+  
+  dat <- df()
+  head( dat )
+
+})
+
+
+```
+
+Output Row 2
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+h3( "Projects Aggregated by Census Tract" )
+
+renderTable({
+  
+  dat <- df()
+  
+  # Preview aggregated treatment data
+
+  treat.data <- 
+    dat %>% 
+    group_by( City, tractid ) %>% 
+    summarize( num.of.projects=n(), tot.proj.spending=sum( ProjectCost, na.rm=TRUE ) ) %>% 
+    arrange( City )
+
+  td2 <<- treat.data
+  
+  head( treat.data, 15 )
+  
+})
+```
+
+
+
+
+Scope Demo {data-orientation=rows}
+===============================================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+
+```
+
+
+Output Row 1
+-------------------------------------
+
+### 
+
+
+```{r, eval=T}
+
+h3( "Scope Demo - Must Recreate Steps" )
+
+renderTable({
+  
+  head( treat.data, 15 )
+  
+})
+```
+
+
+
+
+Demo - Step 3 (Merge)
+=====================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+# Action button (merge NMTC data with Census data)
+
+actionButton("merge", label = "Merge")
+
+
+
+```
+
+
+Output Row 1
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+ 
+
+h3( "Projects Aggregated by Census Tract" )
+
+renderTable({
+  
+  eventReactive(input$merge, {
+                
+                
+  dat <- df()
+  
+  # Preview aggregated treatment data
+
+  treat.data <- 
+    dat %>% 
+    group_by( City, tractid ) %>% 
+    summarize( num.of.projects=n(), tot.proj.spending=sum( ProjectCost, na.rm=TRUE ) ) %>% 
+    arrange( City )
+
+  td2 <<- treat.data
+  
+  head( treat.data, 15 )
+  
+  })
+  
+})
+
+
+```
+
+Output Row 2
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+h3( "Aggregated Treatment data merged with Census data " )
+
+renderTable({
+  
+  dat <- df()
+  
+  # Preview merged data - census data merged with aggregated treatment data
+
+  
+  head( df.merged.treatment, 15 )
+  
+})
+
+
+
+```
+
+
+
+
+Demo - Step 4 (MatchIt)
+=====================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+
+# Action button (Run MatchIt function)
+
+actionButton("run.matchit", label = "Run")
+
+
+
+```
+
+
+Output Row 1
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+h3( "Matching Model Results" )
+
+renderPrint({
+  
+  summary( matching.results )
+  
+})
+
+
+
+```
+
+
+Output Row 2
+-------------------------------------
+
+### 
+
+```{r, eval=T}
+
+## Preview matched data of New Orleans
+
+#h3( "New Orleans matched data" )
+
+#renderTable({
+  
+#  dat <- df()
+  
+#  # Preview merged data - census data merged with aggregated treatment data
+
+  
+#})
+
+h3( "Interpretation" )
+
+h5(  "How to interpret these results?" )
+  
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Call:</b>" ) )
+
+
+# What do these arguments do? 
+# ", , reestimate = TRUE, 
+#    replace = FALSE, caliper = 0.25
+
+h5( HTML('<b>method = "genetic":</b> This argument ...') )
+
+h5( HTML('<b>discard = "both":</b> This argument ...') )
+
+
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Summary of balance for all data:</b>" ) )
+
+h5(  "Interpretation..." )
+
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Summary of balance for matched data:</b>" ) )
+
+h5(  "Interpretation..." )
+
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Percent Balance Improvement:</b>" ) )
+
+h5(  "Interpretation..." )
+
+h4( HTML("<br><hr><br>") )
+
+h4( HTML( "<b>Sample sizes:</b>" ) )
+
+h5(  "Interpretation..." )
+
+```
+
+
+
+
+Demo - Step 5 (Maps)
+=====================================  
+
+
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+# Radio button to choose city
+
+radioButtons( "demo.image", 
+              label = h3("Cities"),
+              choices = list( "Phoenix, AZ" = "phoenix.png" , 
+                              "Boulder, CO" = "boulder.png", 
+                              "New Orleans, LA" = "new-orleans.png", 
+                              "Reno, NV" = "reno.png", 
+                              "New York, NY" = "new-york.png" ), 
+              selected = "new-orleans.png" )
+
+```
+
+
+
+
+Outputs
+-------------------------------------
+
+### Neighborhood Matches by Census Data 
+
+
+```{r, eval=F}
+# DEVELOPMENT CODE
+# TEST WIDGET INPUTS 
+renderPrint({ input$demo.image  })  
+
+get.image <- reactive({ input$demo.image })
+renderPrint({ get.image() })
+```
+
+
+
+
+```{r, eval=F}
+# static version
+renderImage({
+    list( src = "new-orleans.png" )
+  }, deleteFile=FALSE )
+```
+
+```{r}
+# dynamic version linked to widget
+
+get.image <- reactive({ input$demo.image })
+
+renderImage({
+    list( src = get.image() )
+  }, deleteFile=FALSE )
+```
+
+
+```{r, eval=F}
+# EXAMPLE WHEN IMAGES IN THEIR OWN FOLDER
+
+# Use an existing image, and don't delete the image after sending it
+# NOTE: Image is in the subdirectory called 'images/'
+# when input$n is 1 filename is ./images/image1.jpeg
+
+renderImage({
+  
+    # When input$n is 1, 
+    filename <- normalizePath(file.path('./images',
+                              paste('image', input$n, '.jpeg', sep='')))
+
+    # Return a list containing the filename
+    list(src = filename)
+    
+}, deleteFile = FALSE)
+
+```
+Row 
+-------------------------------------
+
+### About this Dashboard
+
+These dorling examples show genetic twins for treated census tracts that received New Markets Tax Credits (NMTC) between 2000-2017, and untreated census tracts that did not receive NMTC funding.
+
+Cases are matched to identify twin untreated tracts in 2000 utilizing the census variables that measure:  
+
+- Unemployment 
+
+- College 
+
+Treated or untreated tracts by:
+
+Matched or unmatched tracts 
+
+The maps have matched data based on coloring dependent on groups:
+
+- Blue - Control group matched
+
+- Red - Treated group matched
+
+- Dark Red - Treated group unmatched
+
+- Grey - Control group unmatched 
+
+If there is no counterfactual found, the map will produce a “No Valid Counterfactual Found.” 
+
+About
+===================================== 
+
+
+
+Row 
+-------------------------------------
+
+### About this Dashboard
+
+This dashboard was created by Melia Petersen and Jaesa Rogers, masters students in the Program Evaluation and Data Analytics program at the Watt's College of Public Service and Community Solutions at Arizona State University. 
+
+This dashboard that has been coded in R for nonprofit workers to be able to compare the effects of programs on neighborhoods that have received the treatment versus neighborhoods that have not. This dashboard uses the data that nonprofits provide as a treatment variable and use all other census tracts in a metropolitan area that have not received treatment and code them as a control group. The treatment group is comprised of census tracts that have received either funding dollars, a program that has been implemented, or a policy applied to it, and the control group are the census tracts that have not had these programs applied to them. The purpose of this is to be able to analyze the impact (positive, negative or neutral) that a program has had on a given areas. 
+
+
+Using the MatchIT package, this dashboard runs a genetic based matching on the census tracts, finding “twins” to show the impact that a program has had by comparing it to a census tract that is statistically the same. To demonstrate functionality, this dashboard uses the New Market Tax Credit (NMTC) program to create neighborhood twins of metropolitan areas that have received NMTC dollars and compare them to neighborhoods in the same city that did not receive them. To visualize this information, dorling shapefiles have been created and show the treated, untreated, matched and unmatched tracts, demonstrating all of the data that is created through this process.
+
+
+### Dashboard Authors
+
+Melia Petersen, Melia.Petersen@asu.edu, Phoenix, AZ
+
+Jaesa Rogers, Jaesa.Rogers@asu.edu, Phoenix, AZ
+
+Client: Dr. Jesse Lecy, jlecy@asu.edu, Phoenix, AZ
+
+Row
+-------------------------------------
+
+DATA DICTIONARY
+
+
+```{r}
+data.dictionary <- read.csv( "data-dictionary.csv", stringsAsFactors=F )
+
+data.dictionary$description <- stringi::stri_trans_general( data.dictionary$Description, "latin-ascii" )
+data.dictionary %>%
+  select( Column, Description ) %>%
+  pander( )
+```
+
