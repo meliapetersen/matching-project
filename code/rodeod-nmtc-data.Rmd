@@ -47,7 +47,7 @@ nmtc$amount <- as.numeric( nmtc$amount ) %>% round(0)
 
 nmtc.dollars <- 
   nmtc %>% 
-  filter( Origination.Year >= 2000 & Origination.Year <= 2010 ) %>%
+  filter( Origination.Year >= 2010 & Origination.Year <= 2020 ) %>%
   group_by( X2010.Census.Tract ) %>% 
   summarize( num.nmtc=n(), nmtc.total = sum( amount, na.rm=T ) )
 
@@ -102,10 +102,7 @@ df <-
               hinc12, hincb12, hincw12, 
               phs12, pcol12,
               pown12, mhmval12 ) %>% 
- filter( treatment %in% c( 1,0 ) ) %>% 
- mutate( Treated = as.numeric( treatment == 1 ), 
-           Control =  as.numeric( treatment == 0 ))
-
+ filter( treatment %in% c( 1,0 ) ) 
 # drop rows with missing values
 
 nrow( df )
