@@ -25,6 +25,7 @@ library( dplyr )
 library( geojsonio )
 library( sp )
 library( pander )
+library(here)
 ```
 
 This code walks through how to make genetic twins for treated census tracts that received New Market Tax Credits (NMTC) between 2010-2017, utilizing dorling shape files that were created for this project and can be found here: https://github.com/DS4PS/usa-dorling-shapefiles/tree/master/maps/metros-dorling 
@@ -97,7 +98,7 @@ new.orleans <- get_dorling( cbsa=new.orleans.cbsa.code )
 Load the New Market Tax Credit treatment data: 
 
 ```{r}
-df.treatment <- read.csv("rodeod-treatment-data.csv")
+df.treatment <- read.csv(here("data/data-rodeo/rodeod-treatment-data.csv"))
 rmarkdown::paged_table(  head(df.treatment) )
 ```
 
