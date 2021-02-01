@@ -74,7 +74,7 @@ h4( HTML("Follow the instructions for the following tabs: <br><hr><br>") )
 
 h5( HTML( "<b>Tab 01</b>" ) )
 
-h5(  "Download the raw New Market Tax Credit data as a .csv, so you can follow along." )
+h5(  "Download the raw New Market Tax Credit data as a .csv, so you can follow along. Make sure to use the dropdown menu to preview all to download the entire dataset." )
 
 h5( HTML("<br><hr><br>") )
 
@@ -178,7 +178,7 @@ fileInput( "demodata2", label = h3("Upload Test Data"),
 
 helpText("Instructions")
 
-h4( HTML( "Upload the .csv you just downloaded on Tab 1, and aggregate it to the census tract level." ) )
+h5( HTML( "Upload the .csv you just downloaded on Tab 1, and aggregate it to the census tract level." ) )
 
 ```
 
@@ -263,6 +263,11 @@ actionButton( "merge", label = "Merge")
 merge_button <- eventReactive( input$merge, {
         read.csv( input$demodata2$datapath )
       })
+
+helpText("Instructions")
+
+h5( HTML( "Click the merge button to merge the data aggregated on Tab 2 with census data from the Bureau of Census." ) )
+
   
 ```
 
@@ -357,7 +362,10 @@ actionButton( "get.matchit", label = "Run" )
 
 get_matchit_results <- eventReactive( input$get.matchit, 
                 { matching.results })
-  
+
+helpText("Instructions")
+
+h5( HTML( "Click the run button to run the matching function on the newly created dataframe, and preview the statistical data for matches in New Orleans." ) )
   
 ```
 
@@ -456,16 +464,23 @@ Demo - Step 5 (Maps)
 Inputs {.sidebar}
 -------------------------------------
 ```{r}
+
+helpText("Instructions")
+
+h5( HTML( "Use the radio button to preview maps of matches found for 4 metropolitan cities." ) )
+
 # Radio button to choose city
 
 radioButtons( "demo.image", 
               label = h3("Cities"),
-              choices = list( "Phoenix, AZ" = "phoenix.png" , 
-                              "Boulder, CO" = "boulder.png", 
-                              "New Orleans, LA" = "new-orleans.png", 
-                              "Reno, NV" = "reno.png", 
-                              "New York, NY" = "new-york.png" ), 
-              selected = "new-orleans.png" )
+              choices = list( "Phoenix, AZ" = here("code/photos/phoenix.png") , 
+                              "New Orleans, LA" = here("code/photos/new-orleans.png") , 
+                              "Reno, NV" = here("code/photos/reno.png") , 
+                              "New York, NY" = here("code/photos/new-york.png" )), 
+              selected = here("code/photos/new-orleans.png")  
+)
+
+
 
 ```
 
@@ -570,9 +585,9 @@ Row
 
 This dashboard was created by Melia Petersen and Jaesa Rogers, masters students in the Program Evaluation and Data Analytics program at the Watt's College of Public Service and Community Solutions at Arizona State University. 
 
-This dashboard that has been coded in R for nonprofit workers to be able to compare the effects of programs on neighborhoods that have received the treatment versus neighborhoods that have not. This dashboard uses the data that nonprofits provide as a treatment variable and use all other census tracts in a metropolitan area that have not received treatment and code them as a control group. The treatment group is comprised of census tracts that have received either funding dollars, a program that has been implemented, or a policy applied to it, and the control group are the census tracts that have not had these programs applied to them. The purpose of this is to be able to analyze the impact (positive, negative or neutral) that a program has had on a given areas. 
+This dashboard that has been coded in R for nonprofit workers to be able to compare the effects of programs on neighborhoods that have received the treatment versus neighborhoods that have not. This dashboard uses the New Markets Tax Credits as an example for the treatment variable and use all other census tracts in a metropolitan area that have not received treatment and code them as a control group. The treatment group is comprised of census tracts that have received either funding dollars, a program that has been implemented, or a policy applied to it, and the control group are the census tracts that have not had these programs applied to them. The purpose of this is to be able to analyze the impact (positive, negative or neutral) that a program has had on a given areas. 
 
-Using the MatchIT package, this dashboard runs a genetic based matching on the census tracts, finding “twins” to show the impact that a program has had by comparing it to a census tract that is statistically the same. To demonstrate functionality, this dashboard uses the New Market Tax Credit (NMTC) program to create neighborhood twins of metropolitan areas that have received NMTC dollars and compare them to neighborhoods in the same city that did not receive them. To visualize this information, dorling shapefiles have been created and show the treated, untreated, matched and unmatched tracts, demonstrating all of the data that is created through this process.
+Using the MatchIT package, this dashboard runs a genetic based matching on the census tracts, finding “twins” to show the impact that a program has had by comparing it to a census tract that is statistically the same. To visualize this information, dorling shapefiles have been created and show the treated, untreated, matched and unmatched tracts, demonstrating all of the data that is created through this process.
 
 
 ### Dashboard Authors
