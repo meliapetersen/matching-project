@@ -1,7 +1,7 @@
 
 # About 
 
-This dashboard was created by Melia Petersen and Jaesa Rogers, masters students in the Program Evaluation and Data Analytics program at the Watt's College of Public Service and Community Solutions at Arizona State University. 
+This project was created by Melia Petersen and Jaesa Rogers, masters students in the Program Evaluation and Data Analytics program at the Watt's College of Public Service and Community Solutions at Arizona State University. 
 
 ### Team Members
 
