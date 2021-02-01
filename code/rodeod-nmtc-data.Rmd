@@ -1,9 +1,16 @@
 ---
 title: "NMTC Data"
-author: "Jaesa Rogers"
-date: "8/26/2020"
 output: html_document
 ---
+
+This code creates the rodeod data frame that will be used for the example of the "Metro Matching Tool." The data sets used for this example are the Longitudinal Tract Data Base (LTDB) and the New Markets Tax Credits (NMTC).
+
+```{r}
+#load necessary packages
+library(here)
+library(tidyverse)
+```
+
 
 ```{r}
 #load LTDB data
@@ -60,40 +67,23 @@ d$nmtc.total[ is.na(d$nmtc.total) ] <- 0
 #remove rural districts 
 d <- filter( d, urban == "urban" )
 
-
 ```
 
-Create data frame for matching
+Create data frame for matching:
 
 ```{r}
 # create treatment variable
 treatment <- ifelse(d$nmtc.total>0, 1, 0)
+
 # add to dataframe
 d$treatment <- treatment
-# match nmtc as treatment (census tracts that recieved nmtc funding vs those that didn't)
-# and seek balance on other SES characteristics 
-## immigrants, high school education, home ownership, pop density (cpp 528 lab), tenure in the neighborhood
-# df <- 
-#   d %>% 
-#   select( cbsa, id2, treatment, pop00.x, nhwht00, nhblk00, ntv00,
-#           asian00, hisp00, haw00, india00, china00, filip00, japan00, korea00, viet00,   
-#           mex00, pr00, cuban00, hu00, vac00, ohu00, a18und00, a60up00, a75up00, agewht00,
-#           a15wht00, a60wht00, ageblk00, a15blk00, a60blk00, agehsp00, a15hsp00, a60hsp00,
-#           agentv00, a15ntv00, a60ntv00, ageasn00, a15asn00, a60asn00, family00, fhh00,
-#           own00, rent00, pop00.y, ruanc00, itanc00, geanc00,  iranc00,  scanc00,  rufb00,  
-#           itfb00, gefb00, irfb00, scfb00, fb00, nat00, n10imm00, ag5up00, olang00, lep00, ag25up00, hs00, col00, ag15up00, mar00, wds00, clf00, unemp00, dflabf00, flabf00, empclf00, prof00, manuf00, semp00, ag18cv00, vet00, cni16u00, dis00, dpov00, npov00, n65pov00, dfmpov00, nfmpov00, dwpov00, nwpov00, dbpov00, nbpov00, dnapov00, nnapov00, dhpov00, nhpov00, dapov00, napov00, incpc00, hu00sp, h30old00, ohu00sp, h10yrs00, dmulti00, multi00, hinc00, hincw00, hincb00, hinch00, hinca00, mhmval00, mrent00, hh00, hhw00, hhb00, hhh00, hha00
-#  ) %>% 
-#  filter( treatment %in% c( 1,0 ) ) %>% 
-#  mutate( Treated = as.numeric( treatment == 1 ), 
-#            Control =  as.numeric( treatment == 0 ))
-
 ```
 
 ```{r}
-# match nmtc as treatment (census tracts that recieved nmtc funding vs those that didn't)
+# match nmtc as treatment (census tracts that received nmtc funding vs those that didn't)
 # and seek balance on other SES characteristics 
 
-## immigrants, high school education, home ownership, pop density (cpp 528 lab), tenure in the neighborhood
+## immigrants, high school education, home ownership, pop density, tenure in the neighborhood
 
 df <- 
   d %>% 
@@ -103,12 +93,11 @@ df <-
               phs12, pcol12,
               pown12, mhmval12 ) %>% 
  filter( treatment %in% c( 1,0 ) ) 
-# drop rows with missing values
 
+# drop rows with missing values
 nrow( df )
 df2 <- na.omit( df )
 nrow( df2 )
-
 
 # "treated" group is white
 # comparison set is minority communities
