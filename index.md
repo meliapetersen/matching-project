@@ -12,7 +12,7 @@ Jesse Lecy: Lecy
 
 [Home]()
 
-[About Us](This dashboard was created by Melia Petersen and Jaesa Rogers, masters students in the Program Evaluation and Data Analytics program at the Watt's College of Public Service and Community Solutions at Arizona State University. )
+[About Us]()
 
 [Matching Tool Instructions](https://github.com/meliapetersen/matching-project/blob/master/code/metro-matching-loop.Rmd)
 

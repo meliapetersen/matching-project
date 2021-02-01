@@ -35,3 +35,23 @@ Your Pages site will use the layout and styles from the Jekyll theme you have se
 ### Support or Contact
 
 Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+
+# About 
+### Team Members
+
+Melia Petersen: meliapetersen  
+Jaesa Rogers: JaesaR   
+
+### Instructor
+Jesse Lecy: Lecy
+
+
+[Home]()
+
+[About Us]()
+
+[Matching Tool Instructions](https://github.com/meliapetersen/matching-project/blob/master/code/metro-matching-loop.Rmd)
+
+[Dashboard Code](https://github.com/meliapetersen/matching-project/blob/master/code/dashboard-code.rmd)
+
+[License]()
