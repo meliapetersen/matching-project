@@ -1,5 +1,3 @@
-# This is the index file for the matching project. 
-
 # About 
 ### Team Members
 
