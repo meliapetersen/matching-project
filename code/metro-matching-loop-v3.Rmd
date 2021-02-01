@@ -31,9 +31,18 @@ library( pander )
 
 This code walks through how to make genetic twins for treated census tracts that received New Market Tax Credits (NMTC) between 2000-2017, utilizing dorling shape files that were created for this project and can be found here: https://github.com/DS4PS/usa-dorling-shapefiles/tree/master/maps/metros-dorling 
 
+<<<<<<< HEAD
+Cases are matched to identify twin untreated tracts in 2010 utilizing the census variables that measure:  
+- Household Income
+
+- Percent of Persons with a College Degree
+
+- Percent of Persons who are White
+=======
 Cases are matched to identify twin untreated tracts in 2000 utilizing the census variables that measure:  
 - Unemployment
 - College 
+>>>>>>> parent of 019885e... update loop code
 
 We have created a data frame that combines census data and NMTC data, assigning the treatment variable to the NMTC tracts, and control to those that have not received funding under this program.
 
