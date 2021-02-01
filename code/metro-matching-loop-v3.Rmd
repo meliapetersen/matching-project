@@ -13,7 +13,6 @@ output:
 knitr::opts_chunk$set( message=F, warning=F, fig.width=12, fig.height=12 )
 ```
 
-
 ```{r}
 # need this installed to use
 # genetic matching option in MatchIt
@@ -28,21 +27,15 @@ library( sp )
 library( pander )
 ```
 
+This code walks through how to make genetic twins for treated census tracts that received New Market Tax Credits (NMTC) between 2010-2017, utilizing dorling shape files that were created for this project and can be found here: https://github.com/DS4PS/usa-dorling-shapefiles/tree/master/maps/metros-dorling 
 
-This code walks through how to make genetic twins for treated census tracts that received New Market Tax Credits (NMTC) between 2000-2017, utilizing dorling shape files that were created for this project and can be found here: https://github.com/DS4PS/usa-dorling-shapefiles/tree/master/maps/metros-dorling 
-
-<<<<<<< HEAD
 Cases are matched to identify twin untreated tracts in 2010 utilizing the census variables that measure:  
 - Household Income
 
 - Percent of Persons with a College Degree
 
 - Percent of Persons who are White
-=======
-Cases are matched to identify twin untreated tracts in 2000 utilizing the census variables that measure:  
-- Unemployment
-- College 
->>>>>>> parent of 019885e... update loop code
+
 
 We have created a data frame that combines census data and NMTC data, assigning the treatment variable to the NMTC tracts, and control to those that have not received funding under this program.
 
@@ -57,7 +50,6 @@ load_crosswalk <- function( )
    dorlings.catalog <- read.csv( dorlings.url )
    return( dorlings.catalog )
 }
-
 
 ```
 
@@ -351,17 +343,10 @@ map_matches <- function( dorling.object, cbsa.name, zoom=TRUE, zoom.range=90 )
 map_matches( new.orleans, cbsa.name="New Orleans", zoom=TRUE, zoom.range=90 )
 ```
 
-```{r}
-
-
-```
-
-
 
 # Combine Steps 
 
 After completing the steps to creating the functions that will find matched twins for the treated groups, you will combine all steps to prepare to loop for all metro CBSAs.
-
 
 ```{r}
 get_matches <- function( cbsa.code, cbsa.catalog, 
@@ -408,6 +393,8 @@ map_matches( akron, cbsa.name="AKRON, OH", zoom=FALSE )
 
 
 ## Create loop for all CBSAs 
+
+Note: Multiple cities could not find counterfactuals because of the number of census variables used. Though these are metropolitan cities, their demographics may not be as diverse as larger metropolitan cities and may not find viable matches. To find matches for all cities, use fewer census variables. 
 
 ```{r, results="asis"}
 
