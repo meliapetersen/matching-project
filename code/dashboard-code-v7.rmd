@@ -532,13 +532,15 @@ Row
 
 ### About this Dashboard
 
-These dorling examples show genetic twins for treated census tracts that received New Markets Tax Credits (NMTC) between 2000-2017, and untreated census tracts that did not receive NMTC funding.
+These dorling examples show genetic twins for treated census tracts that received New Markets Tax Credits (NMTC) between 2010-2017, and untreated census tracts that did not receive NMTC funding.
 
-Cases are matched to identify twin untreated tracts in 2000 utilizing the census variables that measure:  
+Cases are matched to identify twin untreated tracts in 2010 utilizing the census variables that measure:  
 
-- Unemployment 
+- Household Income 
 
-- College 
+- Percent of Persons with a College Degree 
+
+- Percent of Persons who are White
 
 Treated or untreated tracts by:
 
@@ -569,7 +571,6 @@ Row
 This dashboard was created by Melia Petersen and Jaesa Rogers, masters students in the Program Evaluation and Data Analytics program at the Watt's College of Public Service and Community Solutions at Arizona State University. 
 
 This dashboard that has been coded in R for nonprofit workers to be able to compare the effects of programs on neighborhoods that have received the treatment versus neighborhoods that have not. This dashboard uses the data that nonprofits provide as a treatment variable and use all other census tracts in a metropolitan area that have not received treatment and code them as a control group. The treatment group is comprised of census tracts that have received either funding dollars, a program that has been implemented, or a policy applied to it, and the control group are the census tracts that have not had these programs applied to them. The purpose of this is to be able to analyze the impact (positive, negative or neutral) that a program has had on a given areas. 
-
 
 Using the MatchIT package, this dashboard runs a genetic based matching on the census tracts, finding “twins” to show the impact that a program has had by comparing it to a census tract that is statistically the same. To demonstrate functionality, this dashboard uses the New Market Tax Credit (NMTC) program to create neighborhood twins of metropolitan areas that have received NMTC dollars and compare them to neighborhoods in the same city that did not receive them. To visualize this information, dorling shapefiles have been created and show the treated, untreated, matched and unmatched tracts, demonstrating all of the data that is created through this process.
 
