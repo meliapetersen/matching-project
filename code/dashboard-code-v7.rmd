@@ -19,6 +19,7 @@ library( dplyr )
 library( geojsonio )
 library( sp )
 library( pander )
+library(here)
 
 
 # data and libraries for shiny widgets
@@ -39,18 +40,18 @@ library( DT )
 
 # Load the New Market Tax Credit raw data
 
-df.raw <- read.csv("2019_NMTC_Data.csv")
+df.raw <- read.csv(here("data/data-dashboard/2019_NMTC_Data.csv"))
 
-demo.data <- read.csv( "test-data.csv" )
+demo.data <- read.csv(here("data/data-dashboard/test-data.csv" ))
 
 # Load the merged df - aggregated treatment data and census data
 
-df.merged.treatment <- read.csv( "rodeod-treatment-data.csv" )
+df.merged.treatment <- read.csv( here( "data/data-rodeo/rodeod-treatment-data.csv" ))
 
 # Load the matched df - New Orleans matchit object
 
-df3 <- read.csv("df3.csv")
-matching.results <- readRDS("matching-results.rds") 
+df3 <- read.csv(here("data/data-dashboard/new-orleans-matchit-object.csv"))
+matching.results <- readRDS(here("data/data-dashboard/matching-results.rds"))
 
 ```
 
@@ -588,7 +589,7 @@ DATA DICTIONARY
 
 
 ```{r}
-data.dictionary <- read.csv( "data-dictionary.csv", stringsAsFactors=F )
+data.dictionary <- read.csv(here("data/data-dashboard/data-dictionary.csv"), stringsAsFactors=F )
 
 data.dictionary$description <- stringi::stri_trans_general( data.dictionary$Description, "latin-ascii" )
 data.dictionary %>%
