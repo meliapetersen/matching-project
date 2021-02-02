@@ -423,34 +423,34 @@ h4( HTML( "<b>Call:</b>" ) )
 # ", , reestimate = TRUE, 
 #    replace = FALSE, caliper = 0.25
 
-h5( HTML('<b>method = "genetic":</b> This argument ...') )
+h5( HTML('<b>method = "genetic":</b> This argument is calling the matching method called “genetic” matching, which is an algorithm that iteratively checks propensity scores. This matching method provides more balance than the other methods that could have been used.') )
 
-h5( HTML('<b>discard = "both":</b> This argument ...') )
+h5( HTML('<b>discard = "both":</b> The discard argument specifies whether to discard units that are clear outliers, in this case we chose “both” so that both treated and control outliers would be discarded before the matching process begins.') )
 
 
 h4( HTML("<br><hr><br>") )
 
 h4( HTML( "<b>Summary of balance for all data:</b>" ) )
 
-h5(  "Interpretation..." )
+h5(  "First, we assess balance on the unmatched data, by looking at the distance row, as opposed to variable rows. Values of standardized mean differences and eCDF statistics close to zero indicate good balance, so we can see here that there is a good balance." )
 
 h4( HTML("<br><hr><br>") )
 
 h4( HTML( "<b>Summary of balance for matched data:</b>" ) )
 
-h5(  "Interpretation..." )
+h5(  "Next, we assess the balance of the matched data, again by the distance row of the table. Again, we can see that since these numbers are close to zero there is a good balance." )
 
 h4( HTML("<br><hr><br>") )
 
 h4( HTML( "<b>Percent Balance Improvement:</b>" ) )
 
-h5(  "Interpretation..." )
+h5(  "Finally, we assess the percent balance improvement between the matched data and the entire dataset. Values between 0 and 100 indicate that balance improved after matching, and values less than 0 indicate that balance got worse after matching. In this case, the mean difference improved by 98.3%, the eQQ median improved by 93.4%, and so on." )
 
 h4( HTML("<br><hr><br>") )
 
 h4( HTML( "<b>Sample sizes:</b>" ) )
 
-h5(  "Interpretation..." )
+h5(  "The sample size table shows the final matched groups. In total, there were 338 Control groups and 54 Treated groups. Of the 338 Control groups, 32 were matched, 297 went unmatched, and 9 were discarded. Of the 54 Treated groups, 32 were matched, 21 went unmatched (unable to finding appropriate Control group counterfactuals) and 1 was discarded (as an outlier)." )
 
 ```
 
