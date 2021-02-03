@@ -105,6 +105,6 @@ nrow( df2 )
 
 
 ```{r}
-write.csv(df,"rodeod-treatment-data.csv", row.names = FALSE)
+write.csv(df,here ("data/data-rodeo/rodeod-treatment-data.csv"), row.names = FALSE)
 ```
 
