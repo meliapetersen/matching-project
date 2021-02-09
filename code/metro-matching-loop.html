@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>New Market Tax Credit Genetic Twins for Metropolitan US Cities</title>
+
+<script src="metro-matching-loop_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="metro-matching-loop_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="metro-matching-loop_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="metro-matching-loop_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="metro-matching-loop_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="metro-matching-loop_files/navigation-1.1/tabsets.js"></script>
+<link href="metro-matching-loop_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="metro-matching-loop_files/highlightjs-9.12.0/highlight.js"></script>
+<link href="metro-matching-loop_files/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="metro-matching-loop_files/pagedtable-1.1/js/pagedtable.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">New Market Tax Credit Genetic Twins for Metropolitan US Cities</h1>
+<h4 class="date">09 February, 2021</h4>
+
+</div>
+
+
+<pre class="r"><code># need this installed to use
+# genetic matching option in MatchIt
+# install.packages(&quot;rgenoud&quot;)
+
+# load package 
+library( MatchIt )
+library( here )
+library( dplyr )
+library( geojsonio )
+library( sp )
+library( pander )
+library(here)</code></pre>
+<p>This code walks through how to make genetic twins for treated census tracts that received New Market Tax Credits (NMTC) between 2010-2017, utilizing dorling shape files that were created for this project and can be found here: <a href="https://github.com/DS4PS/usa-dorling-shapefiles/tree/master/maps/metros-dorling" class="uri">https://github.com/DS4PS/usa-dorling-shapefiles/tree/master/maps/metros-dorling</a></p>
+<p>Cases are matched to identify twin untreated tracts in 2010 utilizing the census variables that measure:<br />
+- Household Income</p>
+<ul>
+<li><p>Percent of Persons with a College Degree</p></li>
+<li><p>Percent of Persons who are White</p></li>
+</ul>
+<p>We have created a data frame that combines census data and NMTC data, assigning the treatment variable to the NMTC tracts, and control to those that have not received funding under this program.</p>
+<div id="step-01" class="section level2">
+<h2>STEP 01</h2>
+<p>Load a catalog of URLs of dorling cartograms for each CBSA metro area in the US.</p>
+<pre class="r"><code>load_crosswalk &lt;- function( )
+{
+   dorlings.url &lt;- &quot;https://raw.githubusercontent.com/meliapetersen/matching-project/master/data/cbsa-names-and-shapefiles.csv&quot;
+   dorlings.catalog &lt;- read.csv( dorlings.url )
+   return( dorlings.catalog )
+}</code></pre>
+<pre class="r"><code>dorlings.catalog &lt;- load_crosswalk()
+rmarkdown::paged_table( head( dorlings.catalog ) )</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["cbsaname"],"name":[1],"type":["chr"],"align":["left"]},{"label":["cbsa"],"name":[2],"type":["int"],"align":["right"]},{"label":["shapefiles"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"Abilene, TX","2":"10180","3":"abilene-tx-dorling-v1.geojson","_rn_":"1"},{"1":"Akron, OH","2":"10420","3":"akron-oh-dorling-v1.geojson","_rn_":"2"},{"1":"Albany, GA","2":"10500","3":"albany-ga-dorling-v1.geojson","_rn_":"3"},{"1":"Albany-Schenectady-Troy, NY","2":"10580","3":"albany-schenectady-troy-ny-dorling-v1.geojson","_rn_":"4"},{"1":"Albuquerque, NM","2":"10740","3":"albuquerque-nm-dorling-v1.geojson","_rn_":"5"},{"1":"Alexandria, LA","2":"10780","3":"alexandria-la-dorling-v1.geojson","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<p>Load a dorling cartogram for one metro area:</p>
+<pre class="r"><code>get_dorling &lt;- function( cbsa, dorlings.catalog=NULL, mapit=FALSE )
+{
+
+   if( is.null(dorlings.catalog) ){ dorlings.catalog &lt;- load_crosswalk() }
+
+
+   file.name &lt;- dorlings.catalog$shapefile[ dorlings.catalog$cbsa == cbsa ]
+ 
+
+   base.url &lt;- &quot;https://raw.githubusercontent.com/DS4PS/usa-dorling-shapefiles/master/maps/metros-dorling/&quot;
+
+   full.url &lt;- paste0( base.url, file.name )
+
+   map &lt;- geojsonio::geojson_read( x=full.url,  what=&quot;sp&quot; )
+
+   if( mapit ){ plot( map ) }
+
+   return( map )
+   
+}</code></pre>
+<p>Test the function with New Orleans data:</p>
+<pre class="r"><code>new.orleans.cbsa.code &lt;- 35380
+new.orleans &lt;- get_dorling( cbsa=new.orleans.cbsa.code )</code></pre>
+</div>
+<div id="step-02" class="section level2">
+<h2>STEP 02</h2>
+<p>Load the New Market Tax Credit treatment data:</p>
+<pre class="r"><code>df.treatment &lt;- read.csv(here(&quot;data/data-rodeo/rodeod-treatment-data.csv&quot;))
+rmarkdown::paged_table(  head(df.treatment) )</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["cbsa"],"name":[1],"type":["int"],"align":["right"]},{"label":["id2"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["treatment"],"name":[3],"type":["int"],"align":["right"]},{"label":["rent00"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["hinc00"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["pnhwht12"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["pnhblk12"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["phisp12"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["ppov12"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["punemp12"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["hinc12"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["hincb12"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["hincw12"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["phs12"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["pcol12"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["pown12"],"name":[16],"type":["dbl"],"align":["right"]},{"label":["mhmval12"],"name":[17],"type":["dbl"],"align":["right"]}],"data":[{"1":"33860","2":"1001020100","3":"0","4":"157.9979","5":"36685.00","6":"85.32","7":"11.53","8":"0.00","9":"9.24","10":"3.64","11":"56500","12":"89444","13":"56750","14":"56.97","15":"23.80","16":"84.34","17":"121500","_rn_":"1"},{"1":"33860","2":"1001020200","3":"0","4":"212.0000","5":"30298.00","6":"37.02","7":"56.27","8":"2.52","9":"10.51","10":"13.27","11":"41250","12":"32566","13":"54875","14":"51.66","15":"24.20","16":"58.57","17":"130500","_rn_":"2"},{"1":"33860","2":"1001020300","3":"0","4":"333.0000","5":"46731.00","6":"79.78","7":"17.15","8":"1.77","9":"11.82","10":"2.53","11":"43088","12":"35179","13":"46731","14":"48.32","15":"14.02","16":"76.32","17":"118700","_rn_":"3"},{"1":"33860","2":"1001020400","3":"0","4":"370.0000","5":"46142.00","6":"92.60","7":"1.45","8":"2.63","9":"3.14","10":"10.27","11":"54503","12":"21726","13":"54952","14":"41.43","15":"26.18","16":"82.36","17":"133500","_rn_":"4"},{"1":"33860","2":"1001020500","3":"0","4":"531.2739","5":"58886.27","6":"75.30","7":"18.10","8":"2.53","9":"7.74","10":"3.85","11":"65027","12":"52750","13":"68255","14":"30.55","15":"40.45","16":"62.21","17":"174500","_rn_":"5"},{"1":"33860","2":"1001020600","3":"0","4":"209.2220","5":"33699.00","6":"77.45","7":"9.60","8":"10.23","9":"18.34","10":"11.18","11":"52639","12":"16691","13":"54615","14":"52.34","15":"20.51","16":"82.57","17":"129600","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<p>Add the treatment data to the dorling spatial object:</p>
+<pre class="r"><code>add_treatment &lt;- function( df.treatment, dorling.object )
+{
+
+  # merge leftjoin dorling object and treatment data
+  dorling.object &lt;- merge( dorling.object, df.treatment, by.x=&quot;GEOID&quot;, by.y=&quot;id2&quot;, all.x=TRUE )
+
+
+  # create treatment variable 
+  treatment &lt;- dorling.object$treatment 
+  
+  # omit NAs
+  treatment[ is.na(treatment) ] &lt;- 0
+  
+  #add treatment variable back into df
+  dorling.object$treatment &lt;- treatment
+ 
+
+  return( dorling.object )
+}</code></pre>
+<p>Test the function:</p>
+<pre class="r"><code>new.orleans &lt;- add_treatment( df.treatment, dorling.object=new.orleans ) 
+
+# unit test - make sure data merge worked
+table( new.orleans$treatment, useNA=&quot;ifany&quot; )</code></pre>
+<pre><code>## 
+##   0   1 
+## 334  55</code></pre>
+<pre class="r"><code># appended data 
+rmarkdown::paged_table( head(new.orleans@data) )</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["GEOID"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["POP"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["state"],"name":[3],"type":["chr"],"align":["left"]},{"label":["county"],"name":[4],"type":["chr"],"align":["left"]},{"label":["tract"],"name":[5],"type":["chr"],"align":["left"]},{"label":["pop10"],"name":[6],"type":["int"],"align":["right"]},{"label":["nhwht10"],"name":[7],"type":["int"],"align":["right"]},{"label":["nhblk10"],"name":[8],"type":["int"],"align":["right"]},{"label":["ntv10"],"name":[9],"type":["int"],"align":["right"]},{"label":["asian10"],"name":[10],"type":["int"],"align":["right"]},{"label":["hisp10"],"name":[11],"type":["int"],"align":["right"]},{"label":["haw10"],"name":[12],"type":["int"],"align":["right"]},{"label":["india10"],"name":[13],"type":["int"],"align":["right"]},{"label":["china10"],"name":[14],"type":["int"],"align":["right"]},{"label":["filip10"],"name":[15],"type":["int"],"align":["right"]},{"label":["japan10"],"name":[16],"type":["int"],"align":["right"]},{"label":["korea10"],"name":[17],"type":["int"],"align":["right"]},{"label":["viet10"],"name":[18],"type":["int"],"align":["right"]},{"label":["mex10"],"name":[19],"type":["int"],"align":["right"]},{"label":["pr10"],"name":[20],"type":["int"],"align":["right"]},{"label":["cuban10"],"name":[21],"type":["int"],"align":["right"]},{"label":["family10"],"name":[22],"type":["int"],"align":["right"]},{"label":["fhh10"],"name":[23],"type":["int"],"align":["right"]},{"label":["hu10"],"name":[24],"type":["int"],"align":["right"]},{"label":["vac10"],"name":[25],"type":["int"],"align":["right"]},{"label":["ohu10"],"name":[26],"type":["int"],"align":["right"]},{"label":["own10"],"name":[27],"type":["int"],"align":["right"]},{"label":["rent10"],"name":[28],"type":["int"],"align":["right"]},{"label":["a18und10"],"name":[29],"type":["int"],"align":["right"]},{"label":["a60up10"],"name":[30],"type":["int"],"align":["right"]},{"label":["a75up10"],"name":[31],"type":["int"],"align":["right"]},{"label":["agewht10"],"name":[32],"type":["int"],"align":["right"]},{"label":["a15wht10"],"name":[33],"type":["int"],"align":["right"]},{"label":["a60wht10"],"name":[34],"type":["int"],"align":["right"]},{"label":["ageblk10"],"name":[35],"type":["int"],"align":["right"]},{"label":["a15blk10"],"name":[36],"type":["int"],"align":["right"]},{"label":["a60blk10"],"name":[37],"type":["int"],"align":["right"]},{"label":["agehsp10"],"name":[38],"type":["int"],"align":["right"]},{"label":["a15hsp10"],"name":[39],"type":["int"],"align":["right"]},{"label":["a60hsp10"],"name":[40],"type":["int"],"align":["right"]},{"label":["ageasn10"],"name":[41],"type":["int"],"align":["right"]},{"label":["a15asn10"],"name":[42],"type":["int"],"align":["right"]},{"label":["a60asn10"],"name":[43],"type":["int"],"align":["right"]},{"label":["agentv10"],"name":[44],"type":["int"],"align":["right"]},{"label":["a15ntv10"],"name":[45],"type":["int"],"align":["right"]},{"label":["a60ntv10"],"name":[46],"type":["int"],"align":["right"]},{"label":["GlobD10"],"name":[47],"type":["chr"],"align":["left"]},{"label":["GlobG10"],"name":[48],"type":["chr"],"align":["left"]},{"label":["pop.w"],"name":[49],"type":["dbl"],"align":["right"]},{"label":["cbsa"],"name":[50],"type":["int"],"align":["right"]},{"label":["treatment"],"name":[51],"type":["dbl"],"align":["right"]},{"label":["rent00"],"name":[52],"type":["dbl"],"align":["right"]},{"label":["hinc00"],"name":[53],"type":["dbl"],"align":["right"]},{"label":["pnhwht12"],"name":[54],"type":["dbl"],"align":["right"]},{"label":["pnhblk12"],"name":[55],"type":["dbl"],"align":["right"]},{"label":["phisp12"],"name":[56],"type":["dbl"],"align":["right"]},{"label":["ppov12"],"name":[57],"type":["dbl"],"align":["right"]},{"label":["punemp12"],"name":[58],"type":["dbl"],"align":["right"]},{"label":["hinc12"],"name":[59],"type":["dbl"],"align":["right"]},{"label":["hincb12"],"name":[60],"type":["dbl"],"align":["right"]},{"label":["hincw12"],"name":[61],"type":["dbl"],"align":["right"]},{"label":["phs12"],"name":[62],"type":["dbl"],"align":["right"]},{"label":["pcol12"],"name":[63],"type":["dbl"],"align":["right"]},{"label":["pown12"],"name":[64],"type":["dbl"],"align":["right"]},{"label":["mhmval12"],"name":[65],"type":["dbl"],"align":["right"]}],"data":[{"1":"22051020101","2":"2910","3":"LA","4":"Jefferson Parish","5":"Census Tract 201.01","6":"2748","7":"2311","8":"66","9":"16","10":"62","11":"286","12":"0","13":"16","14":"16","15":"7","16":"6","17":"5","18":"8","19":"54","20":"5","21":"28","22":"676","23":"56","24":"1536","25":"168","26":"1368","27":"756","28":"612","29":"421","30":"735","31":"303","32":"2311","33":"282","34":"689","35":"66","36":"7","37":"10","38":"286","39":"75","40":"28","41":"52","42":"8","43":"7","44":"9","45":"2","46":"1","47":"wh","48":"Single immig","49":"0.5351232","50":"35380","51":"0","52":"642","53":"36420","54":"81.78","55":"1.83","56":"15.62","57":"8.74","58":"4.40","59":"51628","60":"31786.00","61":"59815","62":"40.67","63":"29.96","64":"58.35","65":"244600","_rn_":"1"},{"1":"22051020102","2":"3053","3":"LA","4":"Jefferson Parish","5":"Census Tract 201.02","6":"2976","7":"2710","8":"56","9":"8","10":"89","11":"113","12":"0","13":"12","14":"33","15":"3","16":"7","17":"11","18":"17","19":"15","20":"7","21":"8","22":"825","23":"50","24":"1452","25":"121","26":"1331","27":"1074","28":"257","29":"542","30":"855","31":"351","32":"2710","33":"413","34":"818","35":"46","36":"9","37":"1","38":"113","39":"24","40":"24","41":"74","42":"19","43":"11","44":"4","45":"2","46":"0","47":"wa","48":"Single immig","49":"0.5614196","50":"35380","51":"0","52":"337","53":"52399","54":"87.16","55":"1.69","56":"6.39","57":"6.42","58":"1.04","59":"60143","60":"49940.72","61":"61721","62":"31.48","63":"36.68","64":"88.58","65":"240200","_rn_":"2"},{"1":"22051020201","2":"2715","3":"LA","4":"Jefferson Parish","5":"Census Tract 202.01","6":"2078","7":"1356","8":"257","9":"18","10":"187","11":"250","12":"0","13":"27","14":"68","15":"6","16":"0","17":"13","18":"40","19":"32","20":"14","21":"24","22":"503","23":"56","24":"1196","25":"188","26":"1008","27":"406","28":"602","29":"338","30":"430","31":"167","32":"1356","33":"171","34":"358","35":"241","36":"38","37":"16","38":"250","39":"44","40":"28","41":"183","42":"31","43":"23","44":"9","45":"1","46":"2","47":"wbha","48":"Global","49":"0.4992644","50":"35380","51":"0","52":"650","53":"38056","54":"72.18","55":"6.66","56":"9.71","57":"9.16","58":"3.53","59":"54476","60":"46125.00","61":"54355","62":"23.05","63":"45.66","64":"42.15","65":"296500","_rn_":"3"},{"1":"22051020202","2":"3589","3":"LA","4":"Jefferson Parish","5":"Census Tract 202.02","6":"3193","7":"775","8":"823","9":"32","10":"229","11":"1314","12":"3","13":"41","14":"71","15":"12","16":"6","17":"28","18":"13","19":"115","20":"42","21":"53","22":"657","23":"155","24":"1702","25":"275","26":"1427","27":"204","28":"1223","29":"652","30":"325","31":"82","32":"775","33":"81","34":"172","35":"815","36":"183","37":"42","38":"1314","39":"274","40":"84","41":"216","42":"40","43":"20","44":"17","45":"2","46":"3","47":"wbha","48":"Global","49":"0.6599853","50":"35380","51":"0","52":"1387","53":"26317","54":"22.52","55":"32.67","56":"38.06","57":"28.86","58":"12.64","59":"36011","60":"37589.00","61":"37788","62":"46.37","63":"24.94","64":"12.01","65":"89100","_rn_":"4"},{"1":"22051020203","2":"8210","3":"LA","4":"Jefferson Parish","5":"Census Tract 202.03","6":"7153","7":"5240","8":"333","9":"21","10":"548","11":"991","12":"1","13":"144","14":"209","15":"20","16":"7","17":"54","18":"54","19":"170","20":"42","21":"44","22":"2031","23":"139","24":"2975","25":"207","26":"2768","27":"2159","28":"609","29":"1440","30":"1950","31":"641","32":"5240","33":"807","34":"1730","35":"328","36":"103","37":"13","38":"991","39":"202","40":"107","41":"514","42":"98","43":"89","44":"14","45":"5","46":"1","47":"wbha","48":"Global","49":"1.5097462","50":"35380","51":"0","52":"533","53":"65172","54":"67.52","55":"3.66","56":"20.30","57":"12.03","58":"8.36","59":"86952","60":"31754.00","61":"93125","62":"33.60","63":"37.98","64":"80.59","65":"303300","_rn_":"5"},{"1":"22051020301","2":"3344","3":"LA","4":"Jefferson Parish","5":"Census Tract 203.01","6":"3226","7":"2822","8":"39","9":"9","10":"189","11":"164","12":"0","13":"35","14":"79","15":"7","16":"12","17":"22","18":"17","19":"13","20":"10","21":"27","22":"966","23":"45","24":"1296","25":"52","26":"1244","27":"1179","28":"65","29":"705","30":"991","31":"384","32":"2822","33":"515","34":"915","35":"27","36":"5","37":"1","38":"164","39":"37","40":"35","41":"160","42":"42","43":"32","44":"3","45":"0","46":"2","47":"wa","48":"Single immig","49":"0.6149320","50":"35380","51":"0","52":"33","53":"69877","54":"77.01","55":"0.13","56":"10.39","57":"9.79","58":"2.24","59":"86047","60":"49940.72","61":"86926","62":"32.02","63":"47.24","64":"89.82","65":"286800","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<div id="step-03" class="section level2">
+<h2>STEP 03</h2>
+<p>Match the “treated” census tracts (those that received federal aid) with <em>equivalent</em> untreated tracts using the matchit package.</p>
+<pre class="r"><code>match_tracts &lt;- function( fo, dorling.object )
+{
+   # extract data frame from sp object
+   # rename rows using tract IDs
+   
+   df &lt;- as.data.frame( dorling.object )
+   row.names(df) &lt;- df$GEOID
+   
+   # convert string to formula object
+   fo &lt;- as.formula( fo )
+   
+   matchit.object &lt;- NULL
+
+   # find matches in dataframe based on Household income, college education, and whiteness 
+   try( 
+      
+      invisible({ capture.output({ 
+         
+      matchit.object &lt;- matchit( fo, 
+                        method=&quot;genetic&quot;, discard=&quot;both&quot;, reestimate=TRUE,
+                        replace=FALSE, caliper=.25, data = df )
+      })  }),
+      
+      
+      silent=TRUE )
+
+   return( matchit.object )
+
+}</code></pre>
+<p>Test the function:</p>
+<pre class="r"><code># define the matching function formula 
+fo &lt;- as.formula( &quot; treatment ~ hinc12 + pcol12 + pnhwht12&quot; )
+
+new.orleans.matches &lt;- 
+   match_tracts( fo, new.orleans ) 
+
+summary( new.orleans.matches )</code></pre>
+<pre><code>## 
+## Call:
+## matchit(formula = fo, data = df, method = &quot;genetic&quot;, discard = &quot;both&quot;, 
+##     reestimate = TRUE, replace = FALSE, caliper = 0.25)
+## 
+## Summary of balance for all data:
+##          Means Treated Means Control SD Control   Mean Diff    eQQ Med
+## distance        0.2417        0.1353     0.1140      0.1064     0.1123
+## hinc12      34491.3818    48927.1639 22198.4216 -14435.7821 13772.0000
+## pcol12         26.1727       26.3045    19.2408     -0.1318     2.0800
+## pnhwht12       34.4418       51.0782    32.3870    -16.6364    17.5900
+##            eQQ Mean    eQQ Max
+## distance     0.1094     0.1686
+## hinc12   14702.6909 61682.0000
+## pcol12       2.4713     7.9500
+## pnhwht12    16.5593    33.2200
+## 
+## 
+## Summary of balance for matched data:
+##          Means Treated Means Control SD Control Mean Diff  eQQ Med  eQQ Mean
+## distance        0.2063        0.2071     0.0905   -0.0007   0.0082    0.0079
+## hinc12      33019.6364    32850.3333 13025.5700  169.3030 919.0000 1099.7273
+## pcol12         18.7864       18.9052    15.9278   -0.1188   0.4800    0.9612
+## pnhwht12       30.0082       29.6918    29.0153    0.3164   1.3700    1.9885
+##           eQQ Max
+## distance 2.22e-02
+## hinc12   2.96e+03
+## pcol12   3.49e+00
+## pnhwht12 5.68e+00
+## 
+## Percent Balance Improvement:
+##          Mean Diff. eQQ Med eQQ Mean eQQ Max
+## distance    99.2981 92.7034  92.8104 86.8078
+## hinc12      98.8272 93.3270  92.5202 95.2012
+## pcol12       9.8485 76.9231  61.1046 56.1006
+## pnhwht12    98.0984 92.2115  87.9917 82.9019
+## 
+## Sample sizes:
+##           Control Treated
+## All           334      55
+## Matched        33      33
+## Unmatched     212      22
+## Discarded      89       0</code></pre>
+</div>
+<div id="step-04" class="section level2">
+<h2>STEP 04</h2>
+<p>Assign tracts to groups to treated or untreated tracts by matched or unmatched tracts.</p>
+<p>Treated or untreated tracts by Matched or unmatched tracts</p>
+<pre class="r"><code>assign_groups &lt;-  function( matchit.object, dorling.object )
+{
+
+  if( is.null( matchit.object ) )
+  { 
+     status &lt;- rep( &quot;control.unmatched&quot;, nrow( dorling.object ) )
+     status[ dorling.object$treatment == 1 ] &lt;- &quot;treatment.unmatched&quot;
+     dorling.object$status &lt;- status
+  }
+   
+  if( ! is.null( matchit.object ) )  
+  {
+
+     # extract matched pairs from matchit object
+     # match matrix is the length of the original treated groups
+     # IDs are rows of the original dataset
+     
+     matches &lt;- data.frame( treatment.group.id=row.names( matchit.object$match.matrix), 
+                            control.group.id=matchit.object$match.matrix )
+   
+     these.na &lt;- is.na( matches$control.group.id )
+   
+     # generate four cases for tracts 
+     id.all.treated &lt;- matches$treatment.group.id 
+     id.treated.matched &lt;- matches$treatment.group.id[ ! these.na ]
+     id.treated.unmatched &lt;- matches$treatment.group.id[ these.na ]
+     id.control.matched &lt;- na.omit(matches$control.group.id)
+     id.control.unmatched &lt;- dorling.object$GEOID [ !( dorling.object$GEOID %in% id.all.treated | 
+                                                    dorling.object$GEOID %in% id.control.matched ) ]
+   
+     ### Assign tract IDs to groups
+     
+     treated.matched &lt;- na.omit(id.treated.matched) %&gt;% as.numeric
+     control.matched &lt;- na.omit(id.control.matched) %&gt;% as.numeric
+     
+     treated.unmatched &lt;- na.omit(id.treated.unmatched)  %&gt;% as.numeric
+     control.unmatched &lt;- na.omit(id.control.unmatched)  %&gt;% as.numeric
+     
+     status &lt;- rep( &quot;control.unmatched&quot;, nrow( dorling.object ) )
+     status[ dorling.object$GEOID %in% control.matched ] &lt;- &quot;control.matched&quot;
+     status[ dorling.object$GEOID %in% treated.matched ] &lt;- &quot;treatment.matched&quot;
+     status[ dorling.object$GEOID %in% treated.unmatched ] &lt;- &quot;treatment.unmatched&quot;
+     dorling.object$status &lt;- status
+      
+  }
+   
+  return( dorling.object )
+
+}</code></pre>
+<pre class="r"><code>new.orleans &lt;- 
+   assign_groups( matchit.object=new.orleans.matches, 
+                  dorling.object=new.orleans )
+
+table( new.orleans$status )</code></pre>
+<pre><code>## 
+##     control.matched   control.unmatched   treatment.matched treatment.unmatched 
+##                  33                 301                  33                  22</code></pre>
+</div>
+<div id="step-05---map-matches" class="section level1">
+<h1>STEP 05 - Map Matches</h1>
+<p>Map the matched data based on coloring dependent on groups: Blue - Control group matched Red - Treated group matched Dark Red - Treated group unmatched Grey - Control group unmatched</p>
+<p>If there is no counterfactual found, the map will produce a “No Valid Counterfactual Found.”</p>
+<pre class="r"><code>map_matches &lt;- function( dorling.object, cbsa.name, zoom=TRUE, zoom.range=90 )
+{
+
+   
+   if( sum( dorling.object$status == &quot;treatment.matched&quot; ) &gt; 0 )
+   {
+      
+   ### Create color vectors based on matches
+   
+   color.vector &lt;- rep( &quot;gray80&quot;, nrow( dorling.object ) )
+   color.vector[ dorling.object$status == &quot;control.matched&quot; ] &lt;- &quot;blue&quot;
+   color.vector[ dorling.object$status == &quot;treatment.matched&quot; ] &lt;- &quot;darkred&quot;
+   color.vector[ dorling.object$status == &quot;treatment.unmatched&quot; ] &lt;- adjustcolor( &quot;darkred&quot;, alpha.f = 0.4 )
+   
+   border.color &lt;- rep( &quot;gray40&quot;, nrow(dorling.object) )
+   border.color[ dorling.object$status == &quot;treatment.unmatched&quot; ] &lt;- &quot;darkred&quot;
+   
+   
+   # set zoom
+   
+   coords &lt;- coordinates( dorling.object ) %&gt;% as.data.frame()
+   
+   x.min.max &lt;- range( coords$V1, na.rm=T )
+   y.min.max &lt;- range( coords$V2, na.rm=T )
+   
+   if( zoom )
+   {
+     tail &lt;- ( 100 - zoom.range ) / 200   
+     x.min.max &lt;- quantile( coords$V1, c( 0+tail, 1-tail ) )
+     y.min.max &lt;- quantile( coords$V2, c( 0+tail, 1-tail ) )
+   }
+   
+   par( mar=c(0,0,5,0) )
+   
+   plot( dorling.object, 
+         col=color.vector, 
+         border=border.color, 
+         xlim=x.min.max,
+         ylim=y.min.max,
+         main=toupper(cbsa.name), 
+         cex.main=1.5 )
+   }
+   
+   
+       if( sum(dorling.object$treatment, na.rm = TRUE) &lt; 1) 
+   {   
+     cat( &quot;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&quot; )
+     cat( paste0( &quot;&lt;center&gt;&lt;h2&gt;&quot;,&quot;There are no treated tracts in &quot;, toupper(cbsa.name), &quot;.&lt;/h2&gt;&lt;/center&gt;&quot;) )
+     cat( &quot;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&quot; )
+     return( NULL )
+   }
+   
+   if( sum( dorling.object$status == &quot;treatment.matched&quot; ) == 0 )
+   {
+      par( mar=c(0,0,5,0) )
+      plot( dorling.object,
+            col=ifelse( dorling.object$treatment == 1, &quot;darkred&quot;, &quot;gray80&quot; ),
+            main=paste0( toupper(cbsa.name), &quot;: \nNO VALID COUNTERFACTUALS FOUND&quot; ), 
+            cex.main=1.5 )
+            
+   }
+   
+   
+      
+}</code></pre>
+<pre class="r"><code>map_matches( new.orleans, cbsa.name=&quot;New Orleans&quot;, zoom=TRUE, zoom.range=90 )</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-14-1.png" width="1152" /></p>
+</div>
+<div id="combine-steps" class="section level1">
+<h1>Combine Steps</h1>
+<p>After completing the steps to creating the functions that will find matched twins for the treated groups, you will combine all steps to prepare to loop for all metro CBSAs.</p>
+<pre class="r"><code>get_matches &lt;- function( cbsa.code, cbsa.catalog, 
+                         df.treatment, fo,
+                         zoom.range=90, return.dorling=FALSE )
+{
+   
+   cbsa.name &lt;- cbsa.catalog$cbsaname[ cbsa.catalog$cbsa == cbsa.code ]
+   dorling.object &lt;- get_dorling( cbsa=cbsa.code, cbsa.catalog )
+   dorling.object &lt;- add_treatment( df.treatment, dorling.object )
+   matched.tracts &lt;- match_tracts( fo=fo, dorling.object )
+   
+   cat( &quot;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&quot; )
+   cat( paste0( &quot;&lt;center&gt;&lt;h2&gt;&quot;, toupper(cbsa.name), &quot;&lt;/h2&gt;&lt;/center&gt;&quot;) )
+   
+   if( ! is.null(matched.tracts) )
+   { 
+      cat( matched.tracts$nn %&gt;% pander() ) 
+   }
+
+   
+   dorling.object &lt;- assign_groups( matched.tracts, dorling.object )
+   map_matches( dorling.object, cbsa.name, zoom=TRUE, zoom.range )
+   
+   if( return.dorling ){ return( dorling.object ) }
+   
+}</code></pre>
+<pre class="r"><code>fo &lt;- as.formula( &quot;treatment ~ hinc12 + pcol12 + pnhwht12&quot; )
+
+akron &lt;- 
+   get_matches( cbsa.code=10420, 
+                cbsa.catalog=dorlings.catalog,
+                df.treatment=df.treatment,
+                fo=fo,
+                return.dorling=TRUE )
+
+table( akron$status, useNA=&quot;ifany&quot; )
+map_matches( akron, cbsa.name=&quot;AKRON, OH&quot;, zoom=FALSE )</code></pre>
+<div id="create-loop-for-all-cbsas" class="section level2">
+<h2>Create loop for all CBSAs</h2>
+<p>Note: Multiple cities could not find counterfactuals because of the number of census variables used. Though these are metropolitan cities, their demographics may not be as diverse as larger metropolitan cities and may not find viable matches. To find matches for all cities, use fewer census variables.</p>
+<pre class="r"><code># dorlings.catalog &lt;- load_crosswalk()
+
+# df.treatment &lt;- # load treatment data 
+
+# matching formula 
+# fo &lt;- as.formula( &quot;treatment ~ hinc12 + pcol12 + pnhwht12&quot; )
+# cbsa.code.list &lt;- unique( dorlings.catalog$cbsa )
+# 
+# for( i in cbsa.code.list )
+# {
+#   get_matches( cbsa.code=i, 
+#                cbsa.catalog=dorlings.catalog, 
+#                df.treatment=df.treatment, 
+#                fo=fo )
+# }</code></pre>
+<pre class="r"><code>fo &lt;- as.formula( &quot;treatment ~ hinc12 + pcol12 + pnhwht12&quot; )
+cbsa.code.list &lt;- unique( dorlings.catalog$cbsa )
+
+for( i in cbsa.code.list [1:191] )
+{
+  get_matches( cbsa.code=i, 
+               cbsa.catalog=dorlings.catalog, 
+               df.treatment=df.treatment, 
+               fo=fo )
+}</code></pre>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ABILENE, TX&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-1.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;AKRON, OH&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        162        8    
+## 
+##   **Matched**       4         4    
+## 
+##  **Unmatched**     56         4    
+## 
+##  **Discarded**     102        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-2.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ALBANY, GA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ALBANY, GA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ALBANY-SCHENECTADY-TROY, NY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-3.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ALBUQUERQUE, NM&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-4.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ALEXANDRIA, LA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-5.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ALLENTOWN-BETHLEHEM-EASTON, PA-NJ&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-6.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ALTOONA, PA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ALTOONA, PA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;AMARILLO, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in AMARILLO, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;AMES, IA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-7.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ANCHORAGE, AK&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-8.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ANDERSON, IN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ANDERSON, IN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ANDERSON, SC&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ANDERSON, SC.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ANN ARBOR, MI&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ANN ARBOR, MI.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ANNISTON-OXFORD, AL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-9.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ASHEVILLE, NC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-10.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ATHENS-CLARKE COUNTY, GA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-11.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ATLAN CITY, NJ&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ATLAN CITY, NJ.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ATLANTA-SANDY SPRINGS-MARIETTA, GA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        916       27    
+## 
+##   **Matched**      18        18    
+## 
+##  **Unmatched**     487        9    
+## 
+##  **Discarded**     411        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-12.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;AUBURN-OPELIKA, AL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-13.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;AUGUSTA-RICHMOND COUNTY, GA-SC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-14.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;AUSTIN-ROUND ROCK, TX&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        338       11    
+## 
+##   **Matched**       5         5    
+## 
+##  **Unmatched**     282        5    
+## 
+##  **Discarded**     51         1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-15.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BAKERSFIELD, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-16.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BALTIMORE-TOWSON, MD&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        648       27    
+## 
+##   **Matched**      19        19    
+## 
+##  **Unmatched**     396        8    
+## 
+##  **Discarded**     233        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-17.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BANGOR, ME&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-18.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BARNSTABLE TOWN, MA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-19.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BATON ROUGE, LA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        139       11    
+## 
+##   **Matched**       5         5    
+## 
+##  **Unmatched**     53         6    
+## 
+##  **Discarded**     81         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-20.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BATTLE CREEK, MI&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in BATTLE CREEK, MI.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BAY CITY, MI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-21.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BEAUMONT-PORT ARTHUR, TX&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-22.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BEND, OR&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in BEND, OR.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BETHESDA-FREDERICK-GAITHERSBURG, MD&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-23.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BILLINGS, MT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-24.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BINGHAMTON, NY&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in BINGHAMTON, NY.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BIRMINGHAM-HOOVER, AL&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        253       10    
+## 
+##   **Matched**       5         5    
+## 
+##  **Unmatched**     70         5    
+## 
+##  **Discarded**     178        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-25.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BISMARCK, ND&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in BISMARCK, ND.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BLOOMINGTON, IN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-26.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BLOOMINGTON-NORMAL, IL&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in BLOOMINGTON-NORMAL, IL.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BOISE CITY-NAMPA, ID&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-27.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BOSTON-QUINCY, MA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-28.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BOULDER, CO&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-29.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BOWLING GREEN, KY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-30.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BRIDGEPORT-STAMFORD-NORWALK, CT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-31.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BROWNSVILLE-HARLINGEN, TX&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-32.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BRUNSWICK, GA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-33.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BUFFALO-NIAGARA FALLS, NY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-34.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BURLINGTON, NC&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in BURLINGTON, NC.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;BURLINGTON-SOUTH BURLINGTON, VT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-35.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CAMBRIDGE-NEWTON-FRAMINGHAM, MA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-36.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CAMDEN, NJ&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-37.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CANTON-MASSILLON, OH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-38.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CAPE CORAL-FORT MYERS, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-39.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CARSON CITY, NV&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in CARSON CITY, NV.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CEDAR RAPIDS, IA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-40.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CHAMPAIGN-URBANA, IL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-41.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CHARLESTON-NORTH CHARLESTON, SC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-42.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CHARLOTTE-GASTONIA-CONCORD, NC-SC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-43.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CHARLOTTESVILLE, VA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-44.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CHATTANOOGA, TN-GA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-45.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CHICAGO-NAPERVILLE-JOLIET, IL&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**       1774       83    
+## 
+##   **Matched**      78        78    
+## 
+##  **Unmatched**    1237        5    
+## 
+##  **Discarded**     459        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-46.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CHICO, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-47.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CINCINNATI-MIDDLETOWN, OH-KY-IN&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        476       23    
+## 
+##   **Matched**       7         7    
+## 
+##  **Unmatched**     325       14    
+## 
+##  **Discarded**     144        2    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-48.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CLARKSVILLE, TN-KY&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in CLARKSVILLE, TN-KY.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CLEVELAND, TN&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        592       40    
+## 
+##   **Matched**      20        20    
+## 
+##  **Unmatched**     277       19    
+## 
+##  **Discarded**     295        1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-49.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CLEVELAND-ELYRIA-MENTOR, OH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-50.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;COEUR D&#39;ALENE, ID&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-51.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;COLLEGE STATION-BRYAN, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in COLLEGE STATION-BRYAN, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;COLORADO SPRINGS, CO&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-52.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;COLUMBIA, MO&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-53.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;COLUMBIA, SC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-54.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;COLUMBUS, GA-AL&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in COLUMBUS, GA-AL.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;COLUMBUS, IN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in COLUMBUS, IN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;COLUMBUS, OH&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        406       13    
+## 
+##   **Matched**       4         4    
+## 
+##  **Unmatched**     236        9    
+## 
+##  **Discarded**     166        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-55.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CORPUS CHRISTI, TX&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-56.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CORVALLIS, OR&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in CORVALLIS, OR.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;CUMBERLAND, MD-WV&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in CUMBERLAND, MD-WV.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DALLAS-PLANO-IRVING, TX&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        872       26    
+## 
+##   **Matched**      19        19    
+## 
+##  **Unmatched**     352        7    
+## 
+##  **Discarded**     501        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-57.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DALTON, GA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in DALTON, GA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DANVILLE, IL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-58.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DAVENPORT-MOLINE-ROCK ISLAND, IA-IL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-59.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DAYTON, OH&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        214        6    
+## 
+##   **Matched**       2         2    
+## 
+##  **Unmatched**     47         4    
+## 
+##  **Discarded**     165        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-60.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DECATUR, AL&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in DECATUR, AL.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DECATUR, IL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-61.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DELTONA-DAYTONA BEACH-ORMOND BEACH, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-62.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DENVER-AURORA, CO&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        594       21    
+## 
+##   **Matched**      10        10    
+## 
+##  **Unmatched**     308       11    
+## 
+##  **Discarded**     276        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-63.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DES MOINES, IA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-64.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DETROIT-LIVONIA-DEARBORN, MI&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        578       25    
+## 
+##   **Matched**      12        12    
+## 
+##  **Unmatched**     313       11    
+## 
+##  **Discarded**     253        2    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-65.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DOTHAN, AL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-66.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DOVER, DE&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in DOVER, DE.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DUBUQUE, IA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-67.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DULUTH, MN-WI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-68.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;DURHAM, NC&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        99         8    
+## 
+##   **Matched**       3         3    
+## 
+##  **Unmatched**     45         4    
+## 
+##  **Discarded**     51         1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-69.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;EDISON, NJ&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-70.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;EL CENTRO, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-71.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;EL PASO, TX&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        156        4    
+## 
+##   **Matched**       3         3    
+## 
+##  **Unmatched**     108        1    
+## 
+##  **Discarded**     45         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-72.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ELIZABETHTOWN, KY&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ELIZABETHTOWN, KY.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ELKHART-GOSHEN, IN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ELKHART-GOSHEN, IN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ELMIRA, NY&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ELMIRA, NY.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ERIE, PA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-73.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ESSEX COUNTY, MA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-74.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;EUGENE-SPRINGFIELD, OR&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-75.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;EVANSVILLE, IN-KY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-76.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FAIRBANKS, AK&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in FAIRBANKS, AK.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FARGO, ND-MN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-77.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FARMINGTON, NM&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-78.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FAYETTEVILLE, NC&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in FAYETTEVILLE, NC.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FAYETTEVILLE-SPRINGDALE-ROGERS, AR-MO&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-79.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FLAGSTAFF, AZ&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in FLAGSTAFF, AZ.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FLINT, MI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-80.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FLORENCE, SC&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in FLORENCE, SC.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FLORENCE-MUSCLE SHOALS, AL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-81.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FORT COLLINS-LOVELAND, CO&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-82.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FORT SMITH, AR-OK&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-83.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FORT WALTON BEACH-CRESTVIEW-DESTIN, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-84.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FORT WAYNE, IN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-85.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FORT WORTH-ARLINGTON, TX&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        404       10    
+## 
+##   **Matched**       6         6    
+## 
+##  **Unmatched**     257        4    
+## 
+##  **Discarded**     141        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-86.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FRESNO, CA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        188       11    
+## 
+##   **Matched**       2         2    
+## 
+##  **Unmatched**     101        7    
+## 
+##  **Discarded**     85         2    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-87.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;FT LAUDERDALE-POMPANO BEACH-DEERFIELD&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-88.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GADSDEN, AL&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in GADSDEN, AL.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GAINESVILLE, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-89.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GAINESVILLE, GA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in GAINESVILLE, GA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GARY, IN IVISION&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-90.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GLENS FALLS, NY&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in GLENS FALLS, NY.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GOLDSBORO, NC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-91.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GRAND FORKS, ND-MN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in GRAND FORKS, ND-MN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GRAND JUNCTION, CO&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in GRAND JUNCTION, CO.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GRAND RAPIDS-WYOMING, MI&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        156        7    
+## 
+##   **Matched**       2         2    
+## 
+##  **Unmatched**     13         3    
+## 
+##  **Discarded**     141        2    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-92.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GREAT FALLS, MT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-93.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GREELEY, CO&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in GREELEY, CO.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GREENSBORO-HIGH POINT, NC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-94.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GREENVILLE, NC&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in GREENVILLE, NC.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GREENVILLE, SC&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        147        9    
+## 
+##   **Matched**       2         2    
+## 
+##  **Unmatched**     63         7    
+## 
+##  **Discarded**     82         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-95.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;GULFPORT-BILOXI, MS&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-96.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HAGERSTOWN-MARTINSBURG, MD-WV&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-97.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HANFORD-CORCORAN, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-98.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HARRISBURG-CARLISLE, PA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-99.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HARTFORD-WEST HARTFORD-EAST HARTFORD, C&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-100.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HATTIESBURG, MS&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-101.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HICKORY-LENOIR-MORGANTON, NC&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in HICKORY-LENOIR-MORGANTON, NC.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HINESVILLE-FORT STEWART, GA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in HINESVILLE-FORT STEWART, GA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HOLLAND-GRAND HAVEN, MI&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in HOLLAND-GRAND HAVEN, MI.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HONOLULU, HI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-102.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HOT SPRINGS, AR&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-103.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HOUMA-BAYOU CANE-THIBODAUX, LA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-104.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HOUSTON-BAYTOWN-SUGAR LAND, TX&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**       1052       20    
+## 
+##   **Matched**      15        15    
+## 
+##  **Unmatched**     637        5    
+## 
+##  **Discarded**     400        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-105.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HUNTINGTON-ASHLAND, WV-KY-OH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-106.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;HUNTSVILLE, AL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-107.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;IDAHO FALLS, ID&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-108.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;INDIANAPOLIS, IN&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        351        9    
+## 
+##   **Matched**       4         4    
+## 
+##  **Unmatched**     147        5    
+## 
+##  **Discarded**     200        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-109.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;IOWA CITY, IA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-110.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ITHACA, NY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-111.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JACKSON, MI&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in JACKSON, MI.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JACKSON, MS&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        110       13    
+## 
+##   **Matched**       4         4    
+## 
+##  **Unmatched**     28         7    
+## 
+##  **Discarded**     78         2    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-112.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JACKSON, TN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-113.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JACKSONVILLE, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-114.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JACKSONVILLE, NC&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in JACKSONVILLE, NC.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JEFFERSON CITY, MO&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-115.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JOHNSON CITY, TN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in JOHNSON CITY, TN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JOHNSTOWN, PA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in JOHNSTOWN, PA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JONESBORO, AR&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in JONESBORO, AR.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;JOPLIN, MO&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in JOPLIN, MO.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;KALAMAZOO-PORTAGE, MI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-116.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;KANKAKEE-BRADLEY, IL&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in KANKAKEE-BRADLEY, IL.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;KANSAS CITY, MO-KS&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        463       59    
+## 
+##   **Matched**      35        35    
+## 
+##  **Unmatched**     153       24    
+## 
+##  **Discarded**     275        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-117.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;KILLEEN-TEMPLE-FORT HOOD, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in KILLEEN-TEMPLE-FORT HOOD, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;KINGSPORT-BRISTOL-BRISTOL, TN-VA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-118.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;KINGSTON, NY&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in KINGSTON, NY.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;KNOXVILLE, TN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-119.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;KOKOMO, IN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in KOKOMO, IN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LA CROSSE, WI-MN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-120.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAFAYETTE, IN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-121.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAFAYETTE, LA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-122.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAKE CHARLES, LA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-123.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAKE COUNTY-KENOSHA COUNTY, IL-WI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-124.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAKELAND, FL&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        148        5    
+## 
+##   **Matched**       2         2    
+## 
+##  **Unmatched**     51         3    
+## 
+##  **Discarded**     95         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-125.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LANCASTER, PA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-126.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LANSING-EAST LANSING, MI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-127.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAREDO, TX&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-128.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAS CRUCES, NM&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-129.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAS VEGAS-PARADISE, NV&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        475       12    
+## 
+##   **Matched**       6         6    
+## 
+##  **Unmatched**     331        6    
+## 
+##  **Discarded**     138        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-130.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAWRENCE, KS&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-131.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LAWTON, OK&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-132.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LEBANON, PA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in LEBANON, PA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LEWISTON, ID-WA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-133.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LEWISTON-AUBURN, ME&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in LEWISTON-AUBURN, ME.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LEXINGTON-FAYETTE, KY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-134.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LIMA, OH&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in LIMA, OH.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LINCOLN, NE&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-135.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LITTLE ROCK-NORTH LITTLE ROCK, AR&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-18-136.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LOGAN, UT-ID&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in LOGAN, UT-ID.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LONGVIEW, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in LONGVIEW, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;</code></pre>
+<pre class="r"><code>fo &lt;- as.formula( &quot;treatment ~ hinc12 + pcol12 + pnhwht12&quot; )
+cbsa.code.list &lt;- unique( dorlings.catalog$cbsa )
+
+for( i in cbsa.code.list [193:195] )
+{
+  get_matches( cbsa.code=i, 
+               cbsa.catalog=dorlings.catalog, 
+               df.treatment=df.treatment, 
+               fo=fo )
+}</code></pre>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LOUISVILLE, KY-IN&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        307        9    
+## 
+##   **Matched**       5         5    
+## 
+##  **Unmatched**     82         2    
+## 
+##  **Discarded**     220        2    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-19-1.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LUBBOCK, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in LUBBOCK, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;LYNCHBURG, VA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in LYNCHBURG, VA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;</code></pre>
+<pre class="r"><code>fo &lt;- as.formula( &quot;treatment ~ hinc12 + pcol12 + pnhwht12&quot; )
+cbsa.code.list &lt;- unique( dorlings.catalog$cbsa )
+
+for( i in cbsa.code.list [196:206] )
+{
+  get_matches( cbsa.code=i, 
+               cbsa.catalog=dorlings.catalog, 
+               df.treatment=df.treatment, 
+               fo=fo )
+}</code></pre>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MACON, GA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in MACON, GA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MADERA, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-20-1.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MANCHESTER-NASHUA, NH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-20-2.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MANSFIELD, OH&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in MANSFIELD, OH.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MCALLEN-EDINBURG-PHARR, TX&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-20-3.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MEDFORD, OR&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-20-4.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MEMPHIS, TN-MS-AR&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        294       15    
+## 
+##   **Matched**       7         7    
+## 
+##  **Unmatched**     118        8    
+## 
+##  **Discarded**     169        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-20-5.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MERCED, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-20-6.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MIAMI-MIAMI BEACH-KENDALL, FL&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        485       25    
+## 
+##   **Matched**      17        17    
+## 
+##  **Unmatched**     287        7    
+## 
+##  **Discarded**     181        1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-20-7.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MICHIGAN CITY-LA PORTE, IN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in MICHIGAN CITY-LA PORTE, IN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MIDLAND, TX&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-20-8.png" width="1152" /></p>
+<pre class="r"><code>fo &lt;- as.formula( &quot;treatment ~ hinc12 + pcol12 + pnhwht12&quot; )
+cbsa.code.list &lt;- unique( dorlings.catalog$cbsa )
+
+for( i in cbsa.code.list [208:293] )
+{
+  get_matches( cbsa.code=i, 
+               cbsa.catalog=dorlings.catalog, 
+               df.treatment=df.treatment, 
+               fo=fo )
+}</code></pre>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MINNEAPOLIS-ST. PAUL-BLOOMINGTON, MN-WI&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        735       36    
+## 
+##   **Matched**       9         9    
+## 
+##  **Unmatched**     329       25    
+## 
+##  **Discarded**     397        2    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-1.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MISSOULA, MT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-2.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MOBILE, AL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-3.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MODESTO, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-4.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MONROE, LA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-5.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MONROE, MI&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in MONROE, MI.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MONTGOMERY, AL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-6.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MORRISTOWN, TN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in MORRISTOWN, TN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MUNCIE, IN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-7.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MUSKEGON-NORTON SHORES, MI A&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in MUSKEGON-NORTON SHORES, MI A.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;MYRTLE BEACH-CONWAY-NORTH MYRTLE BEACH,&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-8.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NAPA, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-9.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NAPLES-MARCO ISLAND, FL A&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in NAPLES-MARCO ISLAND, FL A.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NASHVILLE-DAVIDSON--MURFREESBORO, TN&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        354        7    
+## 
+##   **Matched**       3         3    
+## 
+##  **Unmatched**     103        3    
+## 
+##  **Discarded**     248        1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-10.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NASSAU-SUFFOLK, NY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-11.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NEW HAVEN-MILFORD, CT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-12.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NEW ORLEANS-METAIRIE-KENNER, LA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        334       55    
+## 
+##   **Matched**      33        33    
+## 
+##  **Unmatched**     212       22    
+## 
+##  **Discarded**     89         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-13.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NEW YORK-WAYNE-WHITE PLAINS, NY-NJ&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-14.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NEWARK-UNION, NJ-PA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        488       15    
+## 
+##   **Matched**       5         5    
+## 
+##  **Unmatched**     131       10    
+## 
+##  **Discarded**     352        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-15.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NILES-BENTON HARBOR, MI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-16.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;NORWICH-NEW LONDON, CT&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in NORWICH-NEW LONDON, CT.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;OAKLAND-FREMONT-HAYWARD, CA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        545       22    
+## 
+##   **Matched**      14        14    
+## 
+##  **Unmatched**     205        7    
+## 
+##  **Discarded**     326        1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-17.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;OCALA, FL&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in OCALA, FL.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;OCEAN CITY, NJ&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in OCEAN CITY, NJ.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ODESSA, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ODESSA, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;OGDEN-CLEARFIELD, UT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-18.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;OKLAHOMA CITY, OK&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        350       13    
+## 
+##   **Matched**       8         8    
+## 
+##  **Unmatched**     286        5    
+## 
+##  **Discarded**     56         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-19.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;OMAHA-COUNCIL BLUFFS, NE-IA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-20.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ORLANDO, FL&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        379       10    
+## 
+##   **Matched**       4         4    
+## 
+##  **Unmatched**     153        6    
+## 
+##  **Discarded**     222        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-21.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;OWENSBORO, KY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-22.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;OXNARD-THOUSAND OAKS-VENTURA, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-23.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PALM BAY-MELBOURNE-TITUSVILLE, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-24.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PANAMA CITY-LYNN HAVEN, FL&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in PANAMA CITY-LYNN HAVEN, FL.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PARKERSBURG-MARIETTA, WV-OH&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in PARKERSBURG-MARIETTA, WV-OH.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PASCAGOULA, MS&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-25.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PENSACOLA-FERRY PASS-BRENT, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-26.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PEORIA, IL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-27.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PHILADELPHIA, PA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        952       36    
+## 
+##   **Matched**      19        19    
+## 
+##  **Unmatched**     272       16    
+## 
+##  **Discarded**     661        1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-28.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PHOENIX-MESA-SCOTTSDALE, AZ&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        965       22    
+## 
+##   **Matched**      15        15    
+## 
+##  **Unmatched**     624        7    
+## 
+##  **Discarded**     326        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-29.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PINE BLUFF, AR&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-30.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PITTSBURGH, PA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        680       24    
+## 
+##   **Matched**      10        10    
+## 
+##  **Unmatched**     666       13    
+## 
+##  **Discarded**      4         1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-31.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PITTSFIELD, MA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-32.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;POCATELLO, ID&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-33.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PORT ST. LUCIE-FORT PIERCE, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-34.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PORTLAND-SOUTH PORTLAND-BIDDEFORD, ME&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-35.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PORTLAND-VANCOUVER-BEAVERTON, OR-WA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        462       28    
+## 
+##   **Matched**      14        14    
+## 
+##  **Unmatched**     216       14    
+## 
+##  **Discarded**     232        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-36.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;POUGHKEEPSIE-NEWBURGH-MIDDLETOWN, NY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-37.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PRESCOTT, AZ&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in PRESCOTT, AZ.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PROVIDENCE-NEW BEDFORD-FALL RIVER, RI-M&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        322       43    
+## 
+##   **Matched**      20        20    
+## 
+##  **Unmatched**     204       23    
+## 
+##  **Discarded**     98         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-38.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PROVO-OREM, UT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-39.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PUEBLO, CO&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-40.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;PUNTA GORDA, FL&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in PUNTA GORDA, FL.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;RALEIGH-CARY, NC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-41.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;RAPID CITY, SD&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-42.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;READING, PA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-43.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;REDDING, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-44.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;RENO-SPARKS, NV&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-45.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;RICHMOND, VA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-46.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;RIVERSIDE-SAN BERNARDINO-ONTARIO, CA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        814        6    
+## 
+##   **Matched**       2         2    
+## 
+##  **Unmatched**     379        4    
+## 
+##  **Discarded**     433        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-47.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ROCHESTER, MN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-48.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ROCHESTER, NY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-49.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ROCKFORD, IL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-50.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ROCKINGHAM COUNTY, NH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-51.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ROCKY MOUNT, NC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-52.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ROME, GA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ROME, GA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SACRAMENTO--ARDEN-ARCADE--ROSEVILLE, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-53.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SAGINAW-SAGINAW TOWNSHIP NORTH, MI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-54.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SALEM, OR&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-55.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SALINAS, CA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in SALINAS, CA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SALISBURY, MD&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in SALISBURY, MD.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SALT LAKE CITY, UT&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        215       19    
+## 
+##   **Matched**       4         4    
+## 
+##  **Unmatched**     56        11    
+## 
+##  **Discarded**     155        4    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-56.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SAN ANGELO, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in SAN ANGELO, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SAN ANTONIO, TX&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        439       15    
+## 
+##   **Matched**      10        10    
+## 
+##  **Unmatched**     119        5    
+## 
+##  **Discarded**     310        0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-57.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SAN DIEGO-CARLSBAD-SAN MARCOS, CA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        607       19    
+## 
+##   **Matched**      13        13    
+## 
+##  **Unmatched**     305        5    
+## 
+##  **Discarded**     289        1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-58.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SAN FRANCISCO-SAN MATEO-REDWOOD CITY,CA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        391       15    
+## 
+##   **Matched**       6         6    
+## 
+##  **Unmatched**     348        9    
+## 
+##  **Discarded**     37         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-59.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SAN JOSE-SUNNYVALE-SANTA CLARA, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-60.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SAN LUIS OBISPO-PASO ROBLES, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-61.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SANDUSKY, OH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-62.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SANTA ANA-ANAHEIM-IRVINE, CA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        577        5    
+## 
+##   **Matched**       4         4    
+## 
+##  **Unmatched**     235        0    
+## 
+##  **Discarded**     338        1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-63.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SANTA BARBARA-SANTA MARIA-GOLETA, CA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in SANTA BARBARA-SANTA MARIA-GOLETA, CA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SANTA CRUZ-WATSONVILLE, CA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-64.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SANTA FE, NM&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-65.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SANTA ROSA-PETALUMA, CA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in SANTA ROSA-PETALUMA, CA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SARASOTA-BRADENTON-VENICE, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-66.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SAVANNAH, GA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-67.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SCRANTON--WILKES-BARRE, PA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-21-68.png" width="1152" /></p>
+<pre class="r"><code>fo &lt;- as.formula( &quot;treatment ~ hinc12 + pcol12 + pnhwht12&quot; )
+cbsa.code.list &lt;- unique( dorlings.catalog$cbsa )
+
+for( i in cbsa.code.list [295:349] )
+{
+  get_matches( cbsa.code=i, 
+               cbsa.catalog=dorlings.catalog, 
+               df.treatment=df.treatment,
+               fo=fo )
+}</code></pre>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SHERMAN-DENISON, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in SHERMAN-DENISON, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SHREVEPORT-BOSSIER CITY, LA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in SHREVEPORT-BOSSIER CITY, LA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SIOUX CITY, IA-NE-SD&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-1.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SIOUX FALLS, SD&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in SIOUX FALLS, SD.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SOUTH BEND-MISHAWAKA, IN-MI&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        79         7    
+## 
+##   **Matched**       4         4    
+## 
+##  **Unmatched**     14         2    
+## 
+##  **Discarded**     61         1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-2.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SPARTANBURG, SC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-3.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SPRINGFIELD, IL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-4.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SPRINGFIELD, MA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        148        9    
+## 
+##   **Matched**       3         3    
+## 
+##  **Unmatched**     52         6    
+## 
+##  **Discarded**     93         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-5.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SPRINGFIELD, MO&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-6.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SPRINGFIELD, OH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-7.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ST. CLOUD, MN&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in ST. CLOUD, MN.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ST. GEORGE, UT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-8.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ST. JOSEPH, MO-KS&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-9.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;ST. LOUIS, MO-IL&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        526       100   
+## 
+##   **Matched**      57        57    
+## 
+##  **Unmatched**     208       40    
+## 
+##  **Discarded**     261        3    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-10.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;STATE COLLEGE, PA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in STATE COLLEGE, PA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;STOCKTON, CA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in STOCKTON, CA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SUMTER, SC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-11.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;SYRACUSE, NY&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-12.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TALLAHASSEE, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-13.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TAMPA-ST. PETERSBURG-CLEARWATER, FL&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        717       18    
+## 
+##   **Matched**      11        11    
+## 
+##  **Unmatched**     673        7    
+## 
+##  **Discarded**     33         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-14.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TERRE HAUTE, IN&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-15.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TEXARKANA, TX-TEXARKANA, AR&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in TEXARKANA, TX-TEXARKANA, AR.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TOLEDO, OH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-16.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TOPEKA, KS&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-17.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TRENTON-EWING, NJ&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-18.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TUCSON, AZ&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-19.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TULSA, OK&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-20.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TUSCALOOSA, AL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-21.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;TYLER, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in TYLER, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;U A-ROME, NY&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in U A-ROME, NY.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;VALDOSTA, GA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-22.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;VALLEJO-FAIRFIELD, CA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in VALLEJO-FAIRFIELD, CA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;VERO BEACH, FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-23.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;VICTORIA, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in VICTORIA, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;VINELAND-MILLVILLE-BRIDGETON, NJ AT&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-24.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;VIRGINIA BEACH-NORFOLK-NEWPORT NEWS, VA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-25.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;VISALIA-PORTERVILLE, CA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in VISALIA-PORTERVILLE, CA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WACO, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in WACO, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WARNER ROBINS, GA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in WARNER ROBINS, GA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WARREN-FARMINGTON-HILLS-TROY, MI&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-26.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WASHINGTON-ARLINGTON-ALEXANDRIA DC-VA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**       1033       34    
+## 
+##   **Matched**      28        28    
+## 
+##  **Unmatched**     516        5    
+## 
+##  **Discarded**     489        1    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-27.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WATERLOO-CEDAR FALLS, IA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-28.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WEIRTON-STEUBENVILLE, WV-OH&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in WEIRTON-STEUBENVILLE, WV-OH.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WEST PALM BEACH-BOCA RATON-BOYNTON FL&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-29.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WHEELING, WV-OH&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-30.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WICHITA FALLS, TX&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in WICHITA FALLS, TX.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WICHITA, KS&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-31.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WILLIAMSPORT, PA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-32.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WILMINGTON, DE-MD-NJ&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-33.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WILMINGTON, NC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-34.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WINSTON-SALEM, NC&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-35.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;WORCESTER, MA&lt;/h2&gt;&lt;/center&gt;
+## -----------------------------------
+##     &amp;nbsp;       Control   Treated 
+## --------------- --------- ---------
+##     **All**        163        9    
+## 
+##   **Matched**       3         3    
+## 
+##  **Unmatched**     79         6    
+## 
+##  **Discarded**     81         0    
+## -----------------------------------</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-36.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;YORK-HANOVER, PA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-37.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;YOUNGSTOWN-WARREN-BOARDMAN, OH-PA&lt;/h2&gt;&lt;/center&gt;</code></pre>
+<p><img src="metro-matching-loop_files/figure-html/unnamed-chunk-22-38.png" width="1152" /></p>
+<pre><code>## &lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;YUBA CITY, CA&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;&lt;h2&gt;There are no treated tracts in YUBA CITY, CA.&lt;/h2&gt;&lt;/center&gt;&lt;br&gt;&lt;br&gt;&lt;hr&gt;&lt;br&gt;&lt;br&gt;</code></pre>
+</div>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

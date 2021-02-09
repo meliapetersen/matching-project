@@ -3,10 +3,7 @@ title: "New Market Tax Credit Genetic Twins for Metropolitan US Cities"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
-    theme: readable
-    df_print: paged
-    highlight: tango
-    css: clean.css
+     self_contained: false
 ---
 
 ```{r setup, include=FALSE}
